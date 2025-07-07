@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const QualityControl = () => {
+  const { toast } = useToast();
   const [selectedBatch, setSelectedBatch] = useState("");
   const [testResults, setTestResults] = useState({
     length: "",
@@ -45,7 +47,21 @@ const QualityControl = () => {
   ];
 
   const handleSubmitTest = () => {
+    if (!selectedBatch) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un numéro de lot",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log("Nouveau test qualité:", testResults);
+    toast({
+      title: "Test enregistré",
+      description: `Contrôle qualité enregistré pour le lot ${selectedBatch}`,
+    });
+    
     // Réinitialiser le formulaire
     setTestResults({
       length: "",
@@ -55,6 +71,28 @@ const QualityControl = () => {
       breakResistance: "",
       defectType: "",
       notes: ""
+    });
+    setSelectedBatch("");
+  };
+
+  const handleViewDetails = (testId: string) => {
+    toast({
+      title: "Détails du test",
+      description: `Ouverture des détails pour ${testId}`,
+    });
+  };
+
+  const handleCorrectiveAction = (lotId: string) => {
+    toast({
+      title: "Action corrective",
+      description: `Procédure d'action corrective initiée pour ${lotId}`,
+    });
+  };
+
+  const handleTrendAnalysis = () => {
+    toast({
+      title: "Analyse de tendance",
+      description: "Rapport d'analyse de tendance généré",
     });
   };
 
@@ -206,7 +244,11 @@ const QualityControl = () => {
                     <div>👤 {test.operator}</div>
                     <div>❌ {test.defects} défauts</div>
                     <div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDetails(test.id)}
+                      >
                         Voir détails
                       </Button>
                     </div>
@@ -235,6 +277,18 @@ const QualityControl = () => {
                   <span className="font-bold ml-2 text-green-600">✓ Active</span>
                 </div>
               </div>
+              <div className="mt-3 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => toast({
+                    title: "Rapport statistique",
+                    description: "Rapport mensuel téléchargé avec succès",
+                  })}
+                >
+                  Télécharger rapport
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -249,11 +303,25 @@ const QualityControl = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-3 bg-red-50 rounded-lg">
               <p className="font-medium text-red-800">LOT-2024-002 - Non-conforme</p>
-              <p className="text-sm text-red-600">12 défauts détectés - Action corrective requise</p>
+              <p className="text-sm text-red-600 mb-2">12 défauts détectés - Action corrective requise</p>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => handleCorrectiveAction("LOT-2024-002")}
+              >
+                Action corrective
+              </Button>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="font-medium text-yellow-800">Tendance dimensionnelle</p>
-              <p className="text-sm text-yellow-600">Légère dérive sur épaisseur - Surveiller four B1</p>
+              <p className="text-sm text-yellow-600 mb-2">Légère dérive sur épaisseur - Surveiller four B1</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleTrendAnalysis}
+              >
+                Analyser tendance
+              </Button>
             </div>
           </div>
         </CardContent>

@@ -1,8 +1,18 @@
 
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
+  const { toast } = useToast();
+
+  const handleSettingsClick = () => {
+    toast({
+      title: "Paramètres",
+      description: "Ouverture du panneau de configuration",
+    });
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
@@ -23,7 +33,11 @@ const Header = () => {
             <p className="text-sm font-medium text-gray-900">Ceramica Dersa</p>
             <p className="text-xs text-gray-500">Tétouan, Maroc</p>
           </div>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleSettingsClick}
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>

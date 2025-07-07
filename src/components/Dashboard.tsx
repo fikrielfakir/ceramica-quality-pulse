@@ -3,8 +3,12 @@ import React from "react";
 import MetricCard from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
+  const { toast } = useToast();
+
   const energyData = [
     { name: "Électricité", value: 85, color: "bg-blue-500" },
     { name: "Gaz", value: 72, color: "bg-orange-500" },
@@ -16,6 +20,20 @@ const Dashboard = () => {
     { defect: "Défauts émail", count: 8, percentage: 1.4 },
     { defect: "Dimensions", count: 5, percentage: 0.9 }
   ];
+
+  const handleAlertAction = (alertType: string) => {
+    toast({
+      title: "Action initiée",
+      description: `Traitement de l'alerte: ${alertType}`,
+    });
+  };
+
+  const handleOptimizationAction = () => {
+    toast({
+      title: "Optimisation appliquée",
+      description: "Le système a programmé l'optimisation énergétique",
+    });
+  };
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -78,9 +96,18 @@ const Dashboard = () => {
               </div>
             ))}
             <div className="mt-4 p-3 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-800">
-                💡 Récupération de chaleur active: <strong>42.3 kWh/h</strong>
-              </p>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-green-800">
+                  💡 Récupération de chaleur active: <strong>42.3 kWh/h</strong>
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleOptimizationAction}
+                >
+                  Optimiser
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -108,9 +135,21 @@ const Dashboard = () => {
               ))}
             </div>
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                📋 Dernier audit ISO: <strong>Conforme</strong> - 15/03/2024
-              </p>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-blue-800">
+                  📋 Dernier audit ISO: <strong>Conforme</strong> - 15/03/2024
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => toast({
+                    title: "Rapport généré",
+                    description: "Le rapport d'audit a été téléchargé",
+                  })}
+                >
+                  Télécharger
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -125,15 +164,39 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3 bg-red-50 rounded-lg">
               <p className="font-medium text-red-800">Four B2 - Température élevée</p>
-              <p className="text-sm text-red-600">Vérifier système de refroidissement</p>
+              <p className="text-sm text-red-600 mb-2">Vérifier système de refroidissement</p>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => handleAlertAction("Four B2 - Température")}
+              >
+                Traiter
+              </Button>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="font-medium text-yellow-800">Maintenance préventive</p>
-              <p className="text-sm text-yellow-600">Broyeur pendulaire - Dans 3 jours</p>
+              <p className="text-sm text-yellow-600 mb-2">Broyeur pendulaire - Dans 3 jours</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleAlertAction("Maintenance préventive")}
+              >
+                Programmer
+              </Button>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
               <p className="font-medium text-green-800">Objectif RSE atteint</p>
-              <p className="text-sm text-green-600">Recyclage liquides: 100%</p>
+              <p className="text-sm text-green-600 mb-2">Recyclage liquides: 100%</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => toast({
+                  title: "Rapport RSE",
+                  description: "Rapport de performance RSE généré",
+                })}
+              >
+                Voir rapport
+              </Button>
             </div>
           </div>
         </CardContent>

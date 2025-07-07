@@ -2,9 +2,13 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import MetricCard from "./MetricCard";
 
 const EnergyMonitoring = () => {
+  const { toast } = useToast();
+
   const energySources = [
     { name: "Électricité Réseau", current: 245, max: 300, unit: "kW", color: "bg-blue-500" },
     { name: "Gaz Naturel", current: 180, max: 250, unit: "m³/h", color: "bg-orange-500" },
@@ -16,6 +20,34 @@ const EnergyMonitoring = () => {
     { equipment: "Four Séchage B1", recovery: 67, efficiency: 85 },
     { equipment: "Broyeur Pendulaire", recovery: 34, efficiency: 78 }
   ];
+
+  const handleOptimizationSuggestion = () => {
+    toast({
+      title: "Optimisation appliquée",
+      description: "Le décalage du broyage a été programmé pour les heures creuses",
+    });
+  };
+
+  const handleEquipmentAction = (equipment: string) => {
+    toast({
+      title: "Maintenance programmée",
+      description: `Maintenance préventive programmée pour ${equipment}`,
+    });
+  };
+
+  const handleAlert = (alertType: string) => {
+    toast({
+      title: "Alerte traitée",
+      description: `Action corrective initiée pour ${alertType}`,
+    });
+  };
+
+  const handleObjectiveTracking = () => {
+    toast({
+      title: "Suivi des objectifs",
+      description: "Rapport de progression MED TEST généré",
+    });
+  };
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -89,10 +121,17 @@ const EnergyMonitoring = () => {
             
             <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">💡 Optimisation Intelligente</h4>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-700 mb-3">
                 Le système a détecté une opportunité d'économie de <strong>15 kWh</strong> 
                 en décalant le broyage de 2h pendant les heures creuses.
               </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleOptimizationSuggestion}
+              >
+                Appliquer optimisation
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -113,6 +152,13 @@ const EnergyMonitoring = () => {
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                       {equipment.efficiency}% efficace
                     </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEquipmentAction(equipment.equipment)}
+                    >
+                      Maintenance
+                    </Button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -137,6 +183,18 @@ const EnergyMonitoring = () => {
                   <span className="text-green-700">Économies annuelles:</span>
                   <div className="font-bold text-lg text-green-800">76,650€</div>
                 </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => toast({
+                    title: "Rapport économies",
+                    description: "Rapport détaillé des économies énergétiques téléchargé",
+                  })}
+                >
+                  Rapport détaillé
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -166,6 +224,16 @@ const EnergyMonitoring = () => {
                 <Progress value={100} className="h-2" />
               </div>
             </div>
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={handleObjectiveTracking}
+              >
+                Suivi objectifs
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -180,6 +248,17 @@ const EnergyMonitoring = () => {
               <div className="mt-2 text-xs text-gray-500">
                 Excellente performance énergétique
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-3"
+                onClick={() => toast({
+                  title: "Analyse de tendance",
+                  description: "Rapport de tendance mensuelle généré",
+                })}
+              >
+                Voir analyse
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -193,10 +272,29 @@ const EnergyMonitoring = () => {
               <div className="p-2 bg-yellow-50 rounded text-xs">
                 <span className="font-medium text-yellow-800">Four B1:</span>
                 <span className="text-yellow-700"> Surconsommation +15%</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-1 w-full"
+                  onClick={() => handleAlert("Four B1")}
+                >
+                  Corriger
+                </Button>
               </div>
               <div className="p-2 bg-green-50 rounded text-xs">
                 <span className="font-medium text-green-800">Récupération:</span>
                 <span className="text-green-700"> Fonctionnement optimal</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-1 w-full"
+                  onClick={() => toast({
+                    title: "Rapport système",
+                    description: "Rapport de fonctionnement du système de récupération",
+                  })}
+                >
+                  Rapport
+                </Button>
               </div>
             </div>
           </CardContent>
