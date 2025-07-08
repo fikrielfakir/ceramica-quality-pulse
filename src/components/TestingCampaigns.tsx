@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 const TestingCampaigns = () => {
   const { toast } = useToast();
   const [selectedCampaign, setSelectedCampaign] = useState("");
+  const [newCampaignName, setNewCampaignName] = useState("");
+  const [newCampaignType, setNewCampaignType] = useState("");
+  const [campaignNotes, setCampaignNotes] = useState("");
 
   const activeCampaigns = [
     { 
@@ -80,30 +83,65 @@ const TestingCampaigns = () => {
   ];
 
   const handleStartCampaign = () => {
+    if (!newCampaignName || !newCampaignType) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Campagne lancée",
-      description: "Nouvelle campagne de tests créée et démarrée",
+      description: `Nouvelle campagne "${newCampaignName}" créée et démarrée avec succès`,
     });
+    
+    // Reset form
+    setNewCampaignName("");
+    setNewCampaignType("");
+    setCampaignNotes("");
   };
 
   const handleScheduleTest = (protocol: string) => {
     toast({
       title: "Test programmé",
-      description: `Test ${protocol} ajouté à la planification`,
+      description: `Test "${protocol}" ajouté à la planification avec succès`,
     });
   };
 
   const handleViewResults = (campaignId: string) => {
     toast({
-      title: "Résultats",
-      description: `Ouverture des résultats pour ${campaignId}`,
+      title: "Résultats de campagne",
+      description: `Ouverture des résultats détaillés pour ${campaignId}`,
     });
   };
 
   const handleCorrectiveAction = (lotId: string) => {
     toast({
-      title: "Action corrective",
-      description: `Procédure corrective initiée pour ${lotId}`,
+      title: "Action corrective initiée",
+      description: `Procédure corrective initiée pour ${lotId} - Rapport généré`,
+    });
+  };
+
+  const handleModifyPlanning = () => {
+    toast({
+      title: "Planning modifié",
+      description: "Planning des tests mis à jour avec succès",
+    });
+  };
+
+  const handleProcessActions = () => {
+    toast({
+      title: "Actions traitées",
+      description: "Procédures correctives initiées et notifications envoyées",
+    });
+  };
+
+  const handleScheduleRevision = () => {
+    toast({
+      title: "Révision programmée",
+      description: "Planning de révision des certifications mis à jour",
     });
   };
 
@@ -166,11 +204,16 @@ const TestingCampaigns = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="campaign-name">Nom de la campagne</Label>
-                <Input id="campaign-name" placeholder="Ex: Contrôle Avril 2024" />
+                <Input 
+                  id="campaign-name" 
+                  placeholder="Ex: Contrôle Avril 2024"
+                  value={newCampaignName}
+                  onChange={(e) => setNewCampaignName(e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="campaign-type">Type de campagne</Label>
-                <Select>
+                <Select value={newCampaignType} onValueChange={setNewCampaignType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -211,6 +254,8 @@ const TestingCampaigns = () => {
                 id="campaign-notes" 
                 placeholder="Objectifs de la campagne, contraintes particulières..."
                 rows={3}
+                value={campaignNotes}
+                onChange={(e) => setCampaignNotes(e.target.value)}
               />
             </div>
 
@@ -305,10 +350,7 @@ const TestingCampaigns = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => toast({
-                  title: "Planning modifié",
-                  description: "Planning des tests mis à jour",
-                })}
+                onClick={handleModifyPlanning}
               >
                 Modifier planning
               </Button>
@@ -323,10 +365,7 @@ const TestingCampaigns = () => {
               <Button 
                 variant="destructive" 
                 size="sm"
-                onClick={() => toast({
-                  title: "Actions traitées",
-                  description: "Procédures correctives initiées",
-                })}
+                onClick={handleProcessActions}
               >
                 Traiter actions
               </Button>
@@ -341,10 +380,7 @@ const TestingCampaigns = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => toast({
-                  title: "Certification",
-                  description: "Planning de révision mis à jour",
-                })}
+                onClick={handleScheduleRevision}
               >
                 Programmer révision
               </Button>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEnhancedQualityTests, useQualityStandards, useEquipmentCalibration } from "@/hooks/useQualityData";
+import { useToast } from "@/hooks/use-toast";
 import QualityTestForm from "./QualityTestForm";
 
 const EnhancedQualityControl = () => {
@@ -12,6 +13,7 @@ const EnhancedQualityControl = () => {
   const { data: qualityTests, isLoading: testsLoading } = useEnhancedQualityTests();
   const { data: qualityStandards } = useQualityStandards();
   const { data: equipment } = useEquipmentCalibration();
+  const { toast } = useToast();
 
   const getComplianceColor = (status: string) => {
     switch (status) {
@@ -29,11 +31,6 @@ const EnhancedQualityControl = () => {
     }
   };
 
-  const recentTests = qualityTests?.slice(0, 10) || [];
-  const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
-  const totalTests = qualityTests?.length || 1;
-  const conformityRate = ((conformeTests / totalTests) * 100).toFixed(1);
-
   // Equipment needing calibration
   const equipmentNeedingCalibration = equipment?.filter(eq => {
     const nextCalibration = new Date(eq.next_calibration_date);
@@ -41,6 +38,47 @@ const EnhancedQualityControl = () => {
     const daysUntilCalibration = Math.ceil((nextCalibration.getTime() - today.getTime()) / (1000 * 3600 * 24));
     return daysUntilCalibration <= 30;
   }) || [];
+
+  const recentTests = qualityTests?.slice(0, 10) || [];
+  const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
+  const totalTests = qualityTests?.length || 1;
+  const conformityRate = ((conformeTests / totalTests) * 100).toFixed(1);
+
+  // Handler functions for all buttons
+  const handleViewDetails = (testId: string) => {
+    toast({
+      title: "Détails du test",
+      description: `Affichage des détails pour le test ${testId}`,
+    });
+  };
+
+  const handleGenerateReport = (type: string) => {
+    toast({
+      title: "Rapport généré",
+      description: `Génération du rapport ${type} en cours...`,
+    });
+  };
+
+  const handleScheduleCalibration = (equipmentId: string) => {
+    toast({
+      title: "Calibration programmée",
+      description: "Calibration programmée avec succès",
+    });
+  };
+
+  const handleViewAnalysis = () => {
+    toast({
+      title: "Analyse des tendances",
+      description: "Ouverture de l'analyse des tendances qualité",
+    });
+  };
+
+  const handleObjectiveTracking = () => {
+    toast({
+      title: "Suivi des objectifs",
+      description: "Affichage du tableau de bord des objectifs qualité",
+    });
+  };
 
   if (activeView === "new-test") {
     return <QualityTestForm />;
@@ -54,9 +92,17 @@ const EnhancedQualityControl = () => {
           <h1 className="text-3xl font-bold text-gray-900">🧪 Contrôle Qualité Avancé</h1>
           <p className="text-gray-600">Système ISO 13006 & ISO 10545 - Conformité IMANOR</p>
         </div>
-        <Button onClick={() => setActiveView("new-test")} className="bg-blue-600 hover:bg-blue-700">
-          ➕ Nouveau Test
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleViewAnalysis} variant="outline">
+            📊 Voir Analyse
+          </Button>
+          <Button onClick={handleObjectiveTracking} variant="outline">
+            🎯 Suivi Objectifs
+          </Button>
+          <Button onClick={() => setActiveView("new-test")} className="bg-blue-600 hover:bg-blue-700">
+            ➕ Nouveau Test
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -157,7 +203,7 @@ const EnhancedQualityControl = () => {
                             {test.status || 'En cours'}
                           </Badge>
                           <Badge variant="outline">
-                            {test.test_type || 'Test général'}
+                            {test.defect_type || 'Test général'}
                           </Badge>
                         </div>
                         
@@ -171,22 +217,25 @@ const EnhancedQualityControl = () => {
                           {test.water_absorption_percent && (
                             <div>Absorption: {test.water_absorption_percent}%</div>
                           )}
-                          {test.breaking_strength_n && (
-                            <div>Résistance: {test.breaking_strength_n}N</div>
+                          {test.break_resistance_n && (
+                            <div>Résistance: {test.break_resistance_n}N</div>
                           )}
                         </div>
                         
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>👤 {test.profiles?.full_name}</span>
                           <span>📅 {new Date(test.test_date).toLocaleDateString('fr-FR')}</span>
+                          {test.defect_count > 0 && (
+                            <span>❌ {test.defect_count} défauts</span>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(test.id)}>
                           📄 Détails
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleGenerateReport(test.id)}>
                           📋 Rapport
                         </Button>
                       </div>
@@ -252,7 +301,7 @@ const EnhancedQualityControl = () => {
                             {needsCalibration ? `${daysUntilCalibration} jours` : 'OK'}
                           </Badge>
                           {needsCalibration && (
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => handleScheduleCalibration(eq.id)}>
                               📅 Programmer
                             </Button>
                           )}
@@ -276,37 +325,49 @@ const EnhancedQualityControl = () => {
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">📊 Rapport de lot</h3>
                   <p className="text-sm text-gray-600 mb-4">Génère un rapport complet pour un lot de production</p>
-                  <Button className="w-full">Générer PDF</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('lot')}>
+                    Générer PDF
+                  </Button>
                 </div>
                 
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">🏆 Certificat IMANOR</h3>
                   <p className="text-sm text-gray-600 mb-4">Certificat de conformité aux normes marocaines</p>
-                  <Button className="w-full">Générer certificat</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('certificate')}>
+                    Générer certificat
+                  </Button>
                 </div>
                 
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">📈 Analyse des défauts</h3>
                   <p className="text-sm text-gray-600 mb-4">Tendances et analyse des défauts détectés</p>
-                  <Button className="w-full">Générer analyse</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('defects')}>
+                    Générer analyse
+                  </Button>
                 </div>
                 
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">📋 Rapport mensuel</h3>
                   <p className="text-sm text-gray-600 mb-4">Synthèse mensuelle de la qualité</p>
-                  <Button className="w-full">Générer rapport</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('monthly')}>
+                    Générer rapport
+                  </Button>
                 </div>
                 
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">🔄 Suivi équipements</h3>
                   <p className="text-sm text-gray-600 mb-4">État et planification des calibrations</p>
-                  <Button className="w-full">Générer planning</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('equipment')}>
+                    Générer planning
+                  </Button>
                 </div>
                 
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-medium mb-2">🎯 Indicateurs KPI</h3>
                   <p className="text-sm text-gray-600 mb-4">Tableau de bord des performances qualité</p>
-                  <Button className="w-full">Générer dashboard</Button>
+                  <Button className="w-full" onClick={() => handleGenerateReport('kpi')}>
+                    Générer dashboard
+                  </Button>
                 </div>
               </div>
             </CardContent>

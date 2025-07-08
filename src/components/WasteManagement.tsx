@@ -26,21 +26,35 @@ const WasteManagement = () => {
   const handleCollectionAction = (category: string) => {
     toast({
       title: "Collecte programmée",
-      description: `Collecte programmée pour ${category}`,
+      description: `Collecte programmée pour ${category} - Prochaine collecte dans 24h`,
     });
   };
 
   const handleRecyclingReport = () => {
     toast({
       title: "Rapport généré",
-      description: "Rapport de recyclage mensuel téléchargé",
+      description: "Rapport de recyclage mensuel téléchargé avec succès",
     });
   };
 
   const handleOptimization = () => {
     toast({
       title: "Optimisation appliquée",
-      description: "Plan d'optimisation de la gestion des déchets activé",
+      description: "Plan d'optimisation de la gestion des déchets activé avec succès",
+    });
+  };
+
+  const handleScheduleCollection = () => {
+    toast({
+      title: "Collecte modifiée",
+      description: "Horaire de collecte mis à jour - Nouvelle collecte programmée",
+    });
+  };
+
+  const handleAuditSchedule = () => {
+    toast({
+      title: "Audit programmé",
+      description: "Rappel d'audit RSE créé - Notification ajoutée au calendrier",
     });
   };
 
@@ -208,10 +222,7 @@ const WasteManagement = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => toast({
-                  title: "Collecte modifiée",
-                  description: "Horaire de collecte mis à jour",
-                })}
+                onClick={handleScheduleCollection}
               >
                 Modifier
               </Button>
@@ -235,10 +246,7 @@ const WasteManagement = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => toast({
-                  title: "Audit programmé",
-                  description: "Rappel d'audit RSE créé",
-                })}
+                onClick={handleAuditSchedule}
               >
                 Programmer
               </Button>

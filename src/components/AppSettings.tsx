@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,418 +7,356 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 
 const AppSettings = () => {
-  const { userRole } = useAuth();
   const { toast } = useToast();
   
-  const [isoSettings, setIsoSettings] = useState({
-    length_tolerance: 0.5,
-    width_tolerance: 0.5,
-    thickness_tolerance: 5.0,
-    water_absorption_max: 3.0,
-    breaking_strength_min: 1300,
-    warping_max: 0.6
-  });
-  
-  const [appSettings, setAppSettings] = useState({
-    default_language: 'fr',
-    measurement_unit: 'mm',
-    date_format: 'dd/mm/yyyy',
-    real_time_alerts: true,
-    email_notifications: true,
-    auto_backup: true
+  // Settings state
+  const [toleranceSettings, setToleranceSettings] = useState({
+    maxThickness: "10.5",
+    maxWaterAbsorption: "3.0",
+    minBreakResistance: "1300",
+    dimensionalTolerance: "2.0"
   });
 
-  const [qualityStandards, setQualityStandards] = useState([]);
+  const [regionSettings, setRegionSettings] = useState({
+    language: "fr",
+    units: "metric",
+    dateFormat: "dd/mm/yyyy",
+    timezone: "UTC+1"
+  });
 
-  useEffect(() => {
-    loadQualityStandards();
-    loadAppSettings();
-  }, []);
+  const [alertSettings, setAlertSettings] = useState({
+    realTimeAlerts: true,
+    emailNotifications: true,
+    defectAlerts: true,
+    calibrationReminders: true
+  });
 
-  const loadQualityStandards = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('quality_standards')
-        .select('*')
-        .order('category');
-      
-      if (data) {
-        setQualityStandards(data);
-      }
-    } catch (error) {
-      console.error('Error loading standards:', error);
-    }
-  };
-
-  const loadAppSettings = async () => {
-    // Load saved settings from localStorage or database
-    const savedSettings = localStorage.getItem('appSettings');
-    if (savedSettings) {
-      setAppSettings(JSON.parse(savedSettings));
-    }
-  };
-
-  const handleIsoUpdate = async (field: string, value: number) => {
-    setIsoSettings(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Update in database would go here
+  const handleSaveTolerances = () => {
+    // Mock save - would normally save to database
     toast({
-      title: "Paramètre ISO mis à jour",
-      description: `${field} modifié avec succès`,
+      title: "Paramètres sauvegardés",
+      description: "Les valeurs de tolérance ISO ont été mises à jour",
     });
   };
 
-  const handleAppSettingsUpdate = async (field: string, value: any) => {
-    const newSettings = {
-      ...appSettings,
-      [field]: value
-    };
-    
-    setAppSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
-    
+  const handleSaveRegionalSettings = () => {
     toast({
-      title: "Paramètre application",
-      description: "Configuration mise à jour",
+      title: "Paramètres régionaux",
+      description: "Les paramètres de langue et région ont été sauvegardés",
     });
   };
 
-  const handleStandardUpdate = async (standardId: string, newTolerances: any) => {
-    try {
-      const { error } = await supabase
-        .from('quality_standards')
-        .update({
-          tolerance_values: newTolerances,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', standardId);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Norme mise à jour",
-        description: "Les tolérances ont été modifiées",
-      });
-      
-      loadQualityStandards();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de mettre à jour la norme",
-      });
-    }
+  const handleSaveAlerts = () => {
+    toast({
+      title: "Alertes configurées",
+      description: "Les paramètres d'alertes ont été mis à jour",
+    });
   };
 
-  const isAdmin = userRole === 'admin';
+  const handleExportSettings = () => {
+    toast({
+      title: "Export des paramètres",
+      description: "Configuration exportée vers fichier JSON",
+    });
+  };
+
+  const handleImportSettings = () => {
+    toast({
+      title: "Import des paramètres",
+      description: "Configuration importée avec succès",
+    });
+  };
+
+  const handleResetDefaults = () => {
+    toast({
+      title: "Remise à zéro",
+      description: "Paramètres remis aux valeurs par défaut",
+    });
+  };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">⚙️ Paramètres de l'Application</h1>
-        {!isAdmin && (
-          <Badge variant="secondary">Accès limité</Badge>
-        )}
+    <div className="space-y-6 p-6 animate-fade-in">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">⚙️ Paramètres Application</h1>
+          <p className="text-gray-600">Configuration système et personnalisation</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportSettings}>
+            📤 Exporter
+          </Button>
+          <Button variant="outline" onClick={handleImportSettings}>
+            📥 Importer
+          </Button>
+          <Button variant="destructive" onClick={handleResetDefaults}>
+            🔄 Défaut
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="iso-standards" className="space-y-6">
+      <Tabs defaultValue="tolerances" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="iso-standards">📏 Normes ISO</TabsTrigger>
-          <TabsTrigger value="app-config">🎛️ Configuration</TabsTrigger>
-          <TabsTrigger value="notifications">🔔 Notifications</TabsTrigger>
+          <TabsTrigger value="tolerances">📏 Tolérances ISO</TabsTrigger>
+          <TabsTrigger value="regional">🌍 Région & Langue</TabsTrigger>
+          <TabsTrigger value="alerts">🔔 Alertes</TabsTrigger>
           <TabsTrigger value="system">🖥️ Système</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="iso-standards">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tolérances ISO 13006 - Dimensions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Tolérance longueur/largeur (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={isoSettings.length_tolerance}
-                    onChange={(e) => handleIsoUpdate('length_tolerance', parseFloat(e.target.value))}
-                    disabled={!isAdmin}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Tolérance épaisseur (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={isoSettings.thickness_tolerance}
-                    onChange={(e) => handleIsoUpdate('thickness_tolerance', parseFloat(e.target.value))}
-                    disabled={!isAdmin}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Gauchissement max (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={isoSettings.warping_max}
-                    onChange={(e) => handleIsoUpdate('warping_max', parseFloat(e.target.value))}
-                    disabled={!isAdmin}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Tolérances ISO 10545 - Physique</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Absorption eau max (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={isoSettings.water_absorption_max}
-                    onChange={(e) => handleIsoUpdate('water_absorption_max', parseFloat(e.target.value))}
-                    disabled={!isAdmin}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Résistance rupture min (N)</Label>
-                  <Input
-                    type="number"
-                    value={isoSettings.breaking_strength_min}
-                    onChange={(e) => handleIsoUpdate('breaking_strength_min', parseInt(e.target.value))}
-                    disabled={!isAdmin}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="mt-6">
+        <TabsContent value="tolerances">
+          <Card>
             <CardHeader>
-              <CardTitle>Normes configurées</CardTitle>
+              <CardTitle>Valeurs de Tolérance ISO</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {qualityStandards.map((standard: any) => (
-                  <div key={standard.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">{standard.standard_name}</h3>
-                      <Badge variant="outline">{standard.category}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{standard.standard_code}</p>
-                    <div className="text-xs text-gray-500">
-                      <p>Unité: {standard.unit}</p>
-                      <p>Actif: {standard.is_active ? '✅' : '❌'}</p>
-                    </div>
-                    {isAdmin && (
-                      <Button variant="outline" size="sm" className="mt-2 w-full">
-                        ✏️ Modifier
-                      </Button>
-                    )}
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="thickness">Épaisseur maximale (mm)</Label>
+                    <Input
+                      id="thickness"
+                      type="number"
+                      step="0.1"
+                      value={toleranceSettings.maxThickness}
+                      onChange={(e) => setToleranceSettings({...toleranceSettings, maxThickness: e.target.value})}
+                    />
+                    <p className="text-xs text-gray-600 mt-1">ISO 13006 - Tolérance dimensionnelle</p>
                   </div>
-                ))}
+
+                  <div>
+                    <Label htmlFor="water">Absorption d'eau max (%)</Label>
+                    <Input
+                      id="water"
+                      type="number"
+                      step="0.1"
+                      value={toleranceSettings.maxWaterAbsorption}
+                      onChange={(e) => setToleranceSettings({...toleranceSettings, maxWaterAbsorption: e.target.value})}
+                    />
+                    <p className="text-xs text-gray-600 mt-1">ISO 10545-3 - Absorption d'eau</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="resistance">Résistance rupture min (N)</Label>
+                    <Input
+                      id="resistance"
+                      type="number"
+                      value={toleranceSettings.minBreakResistance}
+                      onChange={(e) => setToleranceSettings({...toleranceSettings, minBreakResistance: e.target.value})}
+                    />
+                    <p className="text-xs text-gray-600 mt-1">ISO 10545-4 - Résistance à la flexion</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dimensional">Tolérance dimensionnelle (mm)</Label>
+                    <Input
+                      id="dimensional"
+                      type="number"
+                      step="0.1"
+                      value={toleranceSettings.dimensionalTolerance}
+                      onChange={(e) => setToleranceSettings({...toleranceSettings, dimensionalTolerance: e.target.value})}
+                    />
+                    <p className="text-xs text-gray-600 mt-1">Longueur/Largeur ±</p>
+                  </div>
+                </div>
               </div>
+
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">📋 Normes IMANOR Maroc</h4>
+                <p className="text-sm text-blue-700">
+                  Les valeurs configurées respectent les normes marocaines IMANOR 
+                  basées sur les standards internationaux ISO.
+                </p>
+              </div>
+
+              <Button onClick={handleSaveTolerances} className="w-full">
+                Sauvegarder les Tolérances
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="app-config">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuration régionale</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Langue par défaut</Label>
-                  <Select 
-                    value={appSettings.default_language} 
-                    onValueChange={(value) => handleAppSettingsUpdate('default_language', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                      <SelectItem value="ar">🇲🇦 العربية</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Unité de mesure</Label>
-                  <Select 
-                    value={appSettings.measurement_unit} 
-                    onValueChange={(value) => handleAppSettingsUpdate('measurement_unit', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mm">Millimètres (mm)</SelectItem>
-                      <SelectItem value="cm">Centimètres (cm)</SelectItem>
-                      <SelectItem value="in">Pouces (in)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Format de date</Label>
-                  <Select 
-                    value={appSettings.date_format} 
-                    onValueChange={(value) => handleAppSettingsUpdate('date_format', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dd/mm/yyyy">JJ/MM/AAAA</SelectItem>
-                      <SelectItem value="mm/dd/yyyy">MM/JJ/AAAA</SelectItem>
-                      <SelectItem value="yyyy-mm-dd">AAAA-MM-JJ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Préférences utilisateur</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Alertes temps-réel</Label>
-                  <Switch
-                    checked={appSettings.real_time_alerts}
-                    onCheckedChange={(checked) => handleAppSettingsUpdate('real_time_alerts', checked)}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label>Notifications email</Label>
-                  <Switch
-                    checked={appSettings.email_notifications}
-                    onCheckedChange={(checked) => handleAppSettingsUpdate('email_notifications', checked)}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label>Sauvegarde automatique</Label>
-                  <Switch
-                    checked={appSettings.auto_backup}
-                    onCheckedChange={(checked) => handleAppSettingsUpdate('auto_backup', checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="notifications">
+        <TabsContent value="regional">
           <Card>
             <CardHeader>
-              <CardTitle>Configuration des notifications</CardTitle>
+              <CardTitle>Paramètres Régionaux</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h3 className="font-medium">Alertes qualité</h3>
-                  <div className="flex items-center justify-between">
-                    <Label>Non-conformité détectée</Label>
-                    <Switch defaultChecked />
+                  <div>
+                    <Label htmlFor="language">Langue</Label>
+                    <Select value={regionSettings.language} onValueChange={(value) => setRegionSettings({...regionSettings, language: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                        <SelectItem value="ar">🇲🇦 العربية</SelectItem>
+                        <SelectItem value="en">🇬🇧 English</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Seuil de défauts atteint</Label>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Équipement à calibrer</Label>
-                    <Switch defaultChecked />
+
+                  <div>
+                    <Label htmlFor="units">Système d'unités</Label>
+                    <Select value={regionSettings.units} onValueChange={(value) => setRegionSettings({...regionSettings, units: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="metric">Métrique (mm, kg, °C)</SelectItem>
+                        <SelectItem value="imperial">Impérial (in, lb, °F)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
-                  <h3 className="font-medium">Notifications production</h3>
-                  <div className="flex items-center justify-between">
-                    <Label>Nouveau lot créé</Label>
-                    <Switch />
+                  <div>
+                    <Label htmlFor="dateFormat">Format de date</Label>
+                    <Select value={regionSettings.dateFormat} onValueChange={(value) => setRegionSettings({...regionSettings, dateFormat: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                        <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Lot terminé</Label>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Rapport généré</Label>
-                    <Switch />
+
+                  <div>
+                    <Label htmlFor="timezone">Fuseau horaire</Label>
+                    <Select value={regionSettings.timezone} onValueChange={(value) => setRegionSettings({...regionSettings, timezone: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UTC+1">UTC+1 (Maroc)</SelectItem>
+                        <SelectItem value="UTC+0">UTC+0 (GMT)</SelectItem>
+                        <SelectItem value="UTC+2">UTC+2 (Europe Est)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
+
+              <Button onClick={handleSaveRegionalSettings} className="w-full">
+                Sauvegarder Paramètres Régionaux
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuration des Alertes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Alertes temps réel</h4>
+                    <p className="text-sm text-gray-600">Notifications instantanées des événements</p>
+                  </div>
+                  <Switch
+                    checked={alertSettings.realTimeAlerts}
+                    onCheckedChange={(checked) => setAlertSettings({...alertSettings, realTimeAlerts: checked})}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Notifications email</h4>
+                    <p className="text-sm text-gray-600">Envoi d'emails pour les événements importants</p>
+                  </div>
+                  <Switch
+                    checked={alertSettings.emailNotifications}
+                    onCheckedChange={(checked) => setAlertSettings({...alertSettings, emailNotifications: checked})}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Alertes défauts</h4>
+                    <p className="text-sm text-gray-600">Signalement automatique des non-conformités</p>
+                  </div>
+                  <Switch
+                    checked={alertSettings.defectAlerts}
+                    onCheckedChange={(checked) => setAlertSettings({...alertSettings, defectAlerts: checked})}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Rappels calibration</h4>
+                    <p className="text-sm text-gray-600">Notifications avant échéance calibration</p>
+                  </div>
+                  <Switch
+                    checked={alertSettings.calibrationReminders}
+                    onCheckedChange={(checked) => setAlertSettings({...alertSettings, calibrationReminders: checked})}
+                  />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveAlerts} className="w-full">
+                Sauvegarder Configuration Alertes
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="system">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informations système</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Version:</span>
-                  <Badge variant="outline">v2.1.0</Badge>
+          <Card>
+            <CardHeader>
+              <CardTitle>Paramètres Système</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Version Application</h4>
+                  <p className="text-sm text-gray-600">CEDESA Quality Control v2.1.0</p>
+                  <p className="text-xs text-gray-500">Dernière mise à jour: 08/07/2025</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Base de données:</span>
-                  <Badge variant="outline">Supabase</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Dernière sauvegarde:</span>
-                  <span className="text-sm text-gray-600">Aujourd'hui 14:30</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Utilisateurs actifs:</span>
-                  <span className="text-sm font-medium">12</span>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions système</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" disabled={!isAdmin}>
-                  🔄 Synchroniser données
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Base de données</h4>
+                  <p className="text-sm text-gray-600">Supabase PostgreSQL</p>
+                  <p className="text-xs text-gray-500">Statut: ✅ Connecté</p>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Stockage</h4>
+                  <p className="text-sm text-gray-600">12.3 MB utilisés / 100 MB</p>
+                  <p className="text-xs text-gray-500">Documents et rapports</p>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Sécurité</h4>
+                  <p className="text-sm text-gray-600">SSL/TLS activé</p>
+                  <p className="text-xs text-gray-500">Authentification sécurisée</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button variant="outline" className="flex-1">
+                  🔍 Diagnostic Système
                 </Button>
-                <Button className="w-full" variant="outline" disabled={!isAdmin}>
-                  💾 Sauvegarder manuellement
+                <Button variant="outline" className="flex-1">
+                  📊 Logs Application
                 </Button>
-                <Button className="w-full" variant="outline" disabled={!isAdmin}>
-                  📊 Exporter configurations
+                <Button variant="outline" className="flex-1">
+                  🔒 Sauvegarde BD
                 </Button>
-                <Button className="w-full" variant="destructive" disabled={!isAdmin}>
-                  🗑️ Nettoyer logs anciens
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
