@@ -30,11 +30,12 @@ const EnhancedQualityControl = () => {
   };
 
   const recentTests = qualityTests?.slice(0, 10) || [];
-  const conformeTests = qualityTests?.filter(test => test.overall_status === 'Conforme').length || 0;
+  // Use the old table's 'status' field and map 'Conforme' tests
+  const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
   const totalTests = qualityTests?.length || 1;
   const conformityRate = ((conformeTests / totalTests) * 100).toFixed(1);
 
-  // Equipment needing calibration
+  // Equipment needing calibration - handle the case where equipment might be empty
   const equipmentNeedingCalibration = equipment?.filter(eq => {
     const nextCalibration = new Date(eq.next_calibration_date);
     const today = new Date();
@@ -153,12 +154,12 @@ const EnhancedQualityControl = () => {
                           <h3 className="font-medium">
                             {test.production_lots?.lot_number} - {test.production_lots?.product_type}
                           </h3>
-                          <Badge className={getComplianceColor(test.overall_status)}>
-                            {test.overall_status}
+                          <Badge className={getComplianceColor(test.status || 'En cours')}>
+                            {test.status || 'En cours'}
                           </Badge>
                           <Badge variant="outline">
-                            {test.test_type === 'dimensional' ? '🔍 Dimensionnel' :
-                             test.test_type === 'physical' ? '🧪 Physique' : '👀 Visuel'}
+                            {test.defect_type === 'none' ? '✅ Aucun défaut' : 
+                             `⚠️ ${test.defect_type}`}
                           </Badge>
                         </div>
                         
@@ -172,19 +173,17 @@ const EnhancedQualityControl = () => {
                           {test.water_absorption_percent && (
                             <div>Absorption: {test.water_absorption_percent}%</div>
                           )}
-                          {test.breaking_strength_n && (
-                            <div>Résistance: {test.breaking_strength_n}N</div>
+                          {test.break_resistance_n && (
+                            <div>Résistance: {test.break_resistance_n}N</div>
                           )}
                         </div>
                         
-                        {test.defects && Array.isArray(test.defects) && test.defects.length > 0 && (
+                        {test.defect_type && test.defect_type !== 'none' && (
                           <div className="mt-2">
-                            <p className="text-sm font-medium text-red-600">Défauts détectés:</p>
+                            <p className="text-sm font-medium text-red-600">Défaut détecté:</p>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {test.defects.map((defect: any, idx: number) => (
-                                <span key={idx} className={`inline-block w-2 h-2 rounded-full ${getSeverityColor(defect.severity)}`} 
-                                      title={`${defect.name_fr} (${defect.severity})`} />
-                              ))}
+                              <span className="inline-block w-2 h-2 rounded-full bg-red-500" 
+                                    title={`${test.defect_type} (${test.defect_count || 1} défaut${(test.defect_count || 1) > 1 ? 's' : ''})`} />
                             </div>
                           </div>
                         )}
@@ -192,7 +191,6 @@ const EnhancedQualityControl = () => {
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>👤 {test.profiles?.full_name}</span>
                           <span>📅 {new Date(test.test_date).toLocaleDateString('fr-FR')}</span>
-                          {test.equipment_used && <span>⚙️ {test.equipment_used}</span>}
                         </div>
                       </div>
                       
