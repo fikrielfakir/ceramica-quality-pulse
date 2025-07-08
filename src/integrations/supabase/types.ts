@@ -14,7 +14,323 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      compliance_documents: {
+        Row: {
+          created_at: string | null
+          document_name: string
+          document_type: string
+          expiry_date: string | null
+          file_url: string | null
+          id: string
+          issue_date: string | null
+          issuing_authority: string | null
+          status: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_name: string
+          document_type: string
+          expiry_date?: string | null
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_name?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_consumption: {
+        Row: {
+          consumption_kwh: number
+          cost_amount: number | null
+          created_at: string | null
+          department: string | null
+          equipment_name: string | null
+          id: string
+          recorded_date: string | null
+          recorded_time: string | null
+          source: Database["public"]["Enums"]["energy_source"]
+        }
+        Insert: {
+          consumption_kwh: number
+          cost_amount?: number | null
+          created_at?: string | null
+          department?: string | null
+          equipment_name?: string | null
+          id?: string
+          recorded_date?: string | null
+          recorded_time?: string | null
+          source: Database["public"]["Enums"]["energy_source"]
+        }
+        Update: {
+          consumption_kwh?: number
+          cost_amount?: number | null
+          created_at?: string | null
+          department?: string | null
+          equipment_name?: string | null
+          id?: string
+          recorded_date?: string | null
+          recorded_time?: string | null
+          source?: Database["public"]["Enums"]["energy_source"]
+        }
+        Relationships: []
+      }
+      production_lots: {
+        Row: {
+          created_at: string | null
+          id: string
+          lot_number: string
+          operator_id: string | null
+          product_type: string
+          production_date: string
+          quantity: number
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lot_number: string
+          operator_id?: string | null
+          product_type: string
+          production_date: string
+          quantity: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lot_number?: string
+          operator_id?: string | null
+          product_type?: string
+          production_date?: string
+          quantity?: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_lots_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quality_tests: {
+        Row: {
+          break_resistance_n: number | null
+          created_at: string | null
+          defect_count: number | null
+          defect_type: Database["public"]["Enums"]["defect_type"] | null
+          id: string
+          length_mm: number | null
+          lot_id: string
+          notes: string | null
+          operator_id: string | null
+          status: Database["public"]["Enums"]["test_status"] | null
+          test_date: string | null
+          thickness_mm: number | null
+          updated_at: string | null
+          water_absorption_percent: number | null
+          width_mm: number | null
+        }
+        Insert: {
+          break_resistance_n?: number | null
+          created_at?: string | null
+          defect_count?: number | null
+          defect_type?: Database["public"]["Enums"]["defect_type"] | null
+          id?: string
+          length_mm?: number | null
+          lot_id: string
+          notes?: string | null
+          operator_id?: string | null
+          status?: Database["public"]["Enums"]["test_status"] | null
+          test_date?: string | null
+          thickness_mm?: number | null
+          updated_at?: string | null
+          water_absorption_percent?: number | null
+          width_mm?: number | null
+        }
+        Update: {
+          break_resistance_n?: number | null
+          created_at?: string | null
+          defect_count?: number | null
+          defect_type?: Database["public"]["Enums"]["defect_type"] | null
+          id?: string
+          length_mm?: number | null
+          lot_id?: string
+          notes?: string | null
+          operator_id?: string | null
+          status?: Database["public"]["Enums"]["test_status"] | null
+          test_date?: string | null
+          thickness_mm?: number | null
+          updated_at?: string | null
+          water_absorption_percent?: number | null
+          width_mm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_tests_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "production_lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_tests_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testing_campaigns: {
+        Row: {
+          campaign_name: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_name: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_name?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testing_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waste_records: {
+        Row: {
+          cost_amount: number | null
+          created_at: string | null
+          disposal_method: string | null
+          id: string
+          notes: string | null
+          quantity_kg: number
+          recorded_date: string | null
+          responsible_person_id: string | null
+          waste_type: Database["public"]["Enums"]["waste_type"]
+        }
+        Insert: {
+          cost_amount?: number | null
+          created_at?: string | null
+          disposal_method?: string | null
+          id?: string
+          notes?: string | null
+          quantity_kg: number
+          recorded_date?: string | null
+          responsible_person_id?: string | null
+          waste_type: Database["public"]["Enums"]["waste_type"]
+        }
+        Update: {
+          cost_amount?: number | null
+          created_at?: string | null
+          disposal_method?: string | null
+          id?: string
+          notes?: string | null
+          quantity_kg?: number
+          recorded_date?: string | null
+          responsible_person_id?: string | null
+          waste_type?: Database["public"]["Enums"]["waste_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_records_responsible_person_id_fkey"
+            columns: ["responsible_person_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +339,21 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      defect_type:
+        | "none"
+        | "crack"
+        | "glaze"
+        | "dimension"
+        | "color"
+        | "warping"
+      energy_source: "electricity" | "gas" | "solar" | "other"
+      test_status: "Conforme" | "Non-conforme" | "En cours"
+      user_role:
+        | "admin"
+        | "quality_technician"
+        | "production_manager"
+        | "operator"
+      waste_type: "ceramic" | "glaze" | "packaging" | "chemical" | "water"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +480,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      defect_type: ["none", "crack", "glaze", "dimension", "color", "warping"],
+      energy_source: ["electricity", "gas", "solar", "other"],
+      test_status: ["Conforme", "Non-conforme", "En cours"],
+      user_role: [
+        "admin",
+        "quality_technician",
+        "production_manager",
+        "operator",
+      ],
+      waste_type: ["ceramic", "glaze", "packaging", "chemical", "water"],
+    },
   },
 } as const

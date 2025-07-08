@@ -5,21 +5,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useProductionData, useQualityTests } from "@/hooks/useProductionData";
+import { useEnergyConsumption, useWasteRecords } from "@/hooks/useEnergyData";
 
 const Dashboard = () => {
   const { toast } = useToast();
+  const { data: productionLots, isLoading: productionLoading } = useProductionData();
+  const { data: qualityTests, isLoading: qualityLoading } = useQualityTests();
+  const { data: energyData, isLoading: energyLoading } = useEnergyConsumption();
+  const { data: wasteData, isLoading: wasteLoading } = useWasteRecords();
 
-  const energyData = [
+  // Calculate metrics from real data
+  const totalProduction = productionLots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0;
+  const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
+  const totalTests = qualityTests?.length || 1;
+  const qualityRate = ((conformeTests / totalTests) * 100).toFixed(1);
+  
+  const totalEnergyConsumption = energyData?.reduce((sum, record) => sum + Number(record.consumption_kwh), 0) || 0;
+  const totalWasteRecycled = wasteData?.filter(record => record.disposal_method?.includes('Recyclage')).length || 0;
+  const recyclingRate = wasteData?.length ? ((totalWasteRecycled / wasteData.length) * 100).toFixed(1) : '0';
+
+  const energySources = [
     { name: "Électricité", value: 85, color: "bg-blue-500" },
     { name: "Gaz", value: 72, color: "bg-orange-500" },
     { name: "Eau", value: 58, color: "bg-cyan-500" }
   ];
 
-  const qualityMetrics = [
-    { defect: "Fissures", count: 12, percentage: 2.1 },
-    { defect: "Défauts émail", count: 8, percentage: 1.4 },
-    { defect: "Dimensions", count: 5, percentage: 0.9 }
-  ];
+  const qualityMetrics = qualityTests?.slice(0, 3).map(test => ({
+    defect: test.defect_type || 'none',
+    count: test.defect_count || 0,
+    percentage: test.defect_count ? ((test.defect_count / 100) * 100).toFixed(1) : '0'
+  })) || [];
 
   const handleAlertAction = (alertType: string) => {
     toast({
@@ -35,22 +51,26 @@ const Dashboard = () => {
     });
   };
 
+  if (productionLoading || qualityLoading || energyLoading || wasteLoading) {
+    return <div className="p-6">Chargement des données...</div>;
+  }
+
   return (
     <div className="space-y-6 p-6 animate-fade-in">
       {/* Métriques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Production Journalière"
-          value="2,847"
-          unit="m²"
+          value={totalProduction.toString()}
+          unit="pcs"
           trend={5.2}
           icon="🏭"
           color="bg-primary"
-          description="Objectif: 3,000 m²"
+          description="Objectif: 3,000 pcs"
         />
         <MetricCard
           title="Taux de Qualité"
-          value="96.8"
+          value={qualityRate}
           unit="%"
           trend={1.2}
           icon="✅"
@@ -59,7 +79,7 @@ const Dashboard = () => {
         />
         <MetricCard
           title="Consommation Énergie"
-          value="847"
+          value={Math.round(totalEnergyConsumption).toString()}
           unit="kWh"
           trend={-3.1}
           icon="⚡"
@@ -68,7 +88,7 @@ const Dashboard = () => {
         />
         <MetricCard
           title="Recyclage Déchets"
-          value="89.2"
+          value={recyclingRate}
           unit="%"
           trend={8.5}
           icon="♻️"
@@ -86,7 +106,7 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {energyData.map((item, index) => (
+            {energySources.map((item, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">{item.name}</span>
