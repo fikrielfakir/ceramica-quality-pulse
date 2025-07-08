@@ -25,23 +25,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role and permissions
+          // Fetch user role and permissions with a slight delay
           setTimeout(async () => {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role, permissions')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (roleData) {
-              setUserRole(roleData.role);
-              setUserPermissions(roleData.permissions || {});
+            try {
+              // First, ensure user profile exists
+              await ensureUserProfile(session.user);
+              
+              // Then fetch role
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role, permissions')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (roleData) {
+                setUserRole(roleData.role);
+                setUserPermissions(roleData.permissions || {});
+              } else {
+                // Assign default role if none exists
+                await assignDefaultRole(session.user.id);
+                setUserRole('operator');
+                setUserPermissions({});
+              }
+            } catch (error) {
+              console.error('Error fetching user role:', error);
+              // Fallback to default role
+              setUserRole('operator');
+              setUserPermissions({});
             }
-          }, 0);
+          }, 100);
         } else {
           setUserRole(null);
           setUserPermissions({});
@@ -61,9 +78,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const ensureUserProfile = async (user: User) => {
+    try {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || '',
+            created_at: new Date().toISOString()
+          });
+        
+        if (error) {
+          console.error('Error creating profile:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
+  };
+
+  const assignDefaultRole = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'operator',
+          permissions: { perform_tests: true, view_own_tests: true }
+        });
+      
+      if (error) {
+        console.error('Error assigning default role:', error);
+      }
+    } catch (error) {
+      console.error('Error assigning default role:', error);
+    }
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/auth";
+    try {
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
+    } catch (error) {
+      console.error('Error signing out:', error);
+      window.location.href = "/auth";
+    }
   };
 
   return (

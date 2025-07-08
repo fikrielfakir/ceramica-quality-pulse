@@ -1,5 +1,7 @@
 
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavigationProps {
   activeTab: string;
@@ -7,35 +9,41 @@ interface NavigationProps {
 }
 
 const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", subtitle: "Vue d'ensemble", icon: "📊" },
-    { id: "quality", label: "Contrôle Qualité", subtitle: "Inspection produits", icon: "✅" },
-    { id: "energy", label: "Suivi Énergétique", subtitle: "Consommations", icon: "⚡" },
-    { id: "waste", label: "Gestion Déchets", subtitle: "Recyclage & valorisation", icon: "♻️" },
-    { id: "documents", label: "Documents", subtitle: "Conformité ISO", icon: "📁" },
-    { id: "testing", label: "Tests & Mesures", subtitle: "Campagnes qualité", icon: "🧪" }
+  const { userRole } = useAuth();
+
+  const navigationItems = [
+    { id: "dashboard", label: "📊 Tableau de bord", icon: "📊", roles: ["admin", "quality_technician", "production_manager", "operator"] },
+    { id: "quality", label: "🧪 Contrôle Qualité", icon: "🧪", roles: ["admin", "quality_technician", "operator"] },
+    { id: "energy", label: "⚡ Énergie", icon: "⚡", roles: ["admin", "production_manager"] },
+    { id: "waste", label: "♻️ Déchets", icon: "♻️", roles: ["admin", "production_manager"] },
+    { id: "documents", label: "📋 Documents", icon: "📋", roles: ["admin", "quality_technician"] },
+    { id: "testing", label: "🔬 Campagnes", icon: "🔬", roles: ["admin", "quality_technician"] },
+    { id: "profile", label: "👤 Mon Profil", icon: "👤", roles: ["admin", "quality_technician", "production_manager", "operator"] },
+    { id: "settings", label: "⚙️ Paramètres", icon: "⚙️", roles: ["admin", "quality_technician"] }
   ];
 
+  const visibleItems = navigationItems.filter(item => 
+    !userRole || item.roles.includes(userRole)
+  );
+
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="px-6">
+    <nav className="bg-white border-b border-gray-200 px-4 py-2">
+      <div className="max-w-7xl mx-auto">
         <div className="flex space-x-1 overflow-x-auto">
-          {navItems.map((item) => (
-            <button
+          {visibleItems.map((item) => (
+            <Button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
-              className={`flex items-center space-x-3 px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === item.id
-                  ? "border-primary text-primary bg-primary/5"
-                  : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+              variant={activeTab === item.id ? "default" : "ghost"}
+              className={`whitespace-nowrap flex items-center gap-2 ${
+                activeTab === item.id 
+                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               }`}
+              onClick={() => onTabChange(item.id)}
             >
-              <span className="text-lg">{item.icon}</span>
-              <div className="text-left">
-                <div className="font-medium">{item.label}</div>
-                <div className="text-xs text-gray-500">{item.subtitle}</div>
-              </div>
-            </button>
+              <span>{item.icon}</span>
+              <span className="hidden sm:inline">{item.label.replace(/^[^\s]+ /, '')}</span>
+            </Button>
           ))}
         </div>
       </div>

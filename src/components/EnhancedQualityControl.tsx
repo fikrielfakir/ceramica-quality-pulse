@@ -30,12 +30,11 @@ const EnhancedQualityControl = () => {
   };
 
   const recentTests = qualityTests?.slice(0, 10) || [];
-  // Use the old table's 'status' field and map 'Conforme' tests
   const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
   const totalTests = qualityTests?.length || 1;
   const conformityRate = ((conformeTests / totalTests) * 100).toFixed(1);
 
-  // Equipment needing calibration - handle the case where equipment might be empty
+  // Equipment needing calibration
   const equipmentNeedingCalibration = equipment?.filter(eq => {
     const nextCalibration = new Date(eq.next_calibration_date);
     const today = new Date();
@@ -158,8 +157,7 @@ const EnhancedQualityControl = () => {
                             {test.status || 'En cours'}
                           </Badge>
                           <Badge variant="outline">
-                            {test.defect_type === 'none' ? '✅ Aucun défaut' : 
-                             `⚠️ ${test.defect_type}`}
+                            {test.test_type || 'Test général'}
                           </Badge>
                         </div>
                         
@@ -173,20 +171,10 @@ const EnhancedQualityControl = () => {
                           {test.water_absorption_percent && (
                             <div>Absorption: {test.water_absorption_percent}%</div>
                           )}
-                          {test.break_resistance_n && (
-                            <div>Résistance: {test.break_resistance_n}N</div>
+                          {test.breaking_strength_n && (
+                            <div>Résistance: {test.breaking_strength_n}N</div>
                           )}
                         </div>
-                        
-                        {test.defect_type && test.defect_type !== 'none' && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium text-red-600">Défaut détecté:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              <span className="inline-block w-2 h-2 rounded-full bg-red-500" 
-                                    title={`${test.defect_type} (${test.defect_count || 1} défaut${(test.defect_count || 1) > 1 ? 's' : ''})`} />
-                            </div>
-                          </div>
-                        )}
                         
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>👤 {test.profiles?.full_name}</span>

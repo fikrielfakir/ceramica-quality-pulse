@@ -10,6 +10,8 @@ import EnergyMonitoring from "../components/EnergyMonitoring";
 import WasteManagement from "../components/WasteManagement";
 import ComplianceDocuments from "../components/ComplianceDocuments";
 import TestingCampaigns from "../components/TestingCampaigns";
+import UserProfile from "../components/UserProfile";
+import AppSettings from "../components/AppSettings";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -29,6 +31,10 @@ const Index = () => {
         return <ComplianceDocuments />;
       case "testing":
         return <TestingCampaigns />;
+      case "profile":
+        return <UserProfile />;
+      case "settings":
+        return <AppSettings />;
       default:
         return <Dashboard />;
     }
