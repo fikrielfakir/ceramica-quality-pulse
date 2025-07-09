@@ -7,9 +7,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: string | null;
-  userPermissions: any;
+  userPermissions: string[];
   loading: boolean;
   signOut: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userPermissions, setUserPermissions] = useState<any>({});
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,32 +38,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               // First, ensure user profile exists
               await ensureUserProfile(session.user);
               
-              // Then fetch role
+              // Then fetch role and permissions
               const { data: roleData } = await supabase
                 .from('user_roles')
-                .select('role, permissions')
+                .select(`
+                  roles (
+                    role_key,
+                    role_name,
+                    role_permissions (
+                      permissions (
+                        permission_key
+                      )
+                    )
+                  )
+                `)
                 .eq('user_id', session.user.id)
                 .single();
               
-              if (roleData) {
-                setUserRole(roleData.role);
-                setUserPermissions(roleData.permissions || {});
+              if (roleData?.roles) {
+                setUserRole(roleData.roles.role_key);
+                const permissions = roleData.roles.role_permissions
+                  ?.map((rp: any) => rp.permissions?.permission_key)
+                  .filter(Boolean) || [];
+                setUserPermissions(permissions);
               } else {
                 // Assign default role if none exists
                 await assignDefaultRole(session.user.id);
                 setUserRole('operator');
-                setUserPermissions({});
+                setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
               }
             } catch (error) {
               console.error('Error fetching user role:', error);
               // Fallback to default role
               setUserRole('operator');
-              setUserPermissions({});
+              setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
             }
           }, 100);
         } else {
           setUserRole(null);
-          setUserPermissions({});
+          setUserPermissions([]);
         }
         
         setLoading(false);
@@ -108,20 +123,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const assignDefaultRole = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'operator',
-          permissions: { perform_tests: true, view_own_tests: true }
-        });
-      
-      if (error) {
-        console.error('Error assigning default role:', error);
+      // Get the operator role
+      const { data: operatorRole } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('role_key', 'operator')
+        .single();
+
+      if (operatorRole) {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role_id: operatorRole.id
+          });
+        
+        if (error) {
+          console.error('Error assigning default role:', error);
+        }
       }
     } catch (error) {
       console.error('Error assigning default role:', error);
     }
+  };
+
+  const hasPermission = (permission: string) => {
+    return userPermissions.includes(permission) || userRole === 'admin';
+  };
+
+  const isAdmin = () => {
+    return userRole === 'admin';
   };
 
   const signOut = async () => {
@@ -141,7 +172,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userRole,
       userPermissions,
       loading,
-      signOut
+      signOut,
+      hasPermission,
+      isAdmin
     }}>
       {children}
     </AuthContext.Provider>

@@ -9,22 +9,71 @@ interface NavigationProps {
 }
 
 const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
-  const { userRole } = useAuth();
+  const { userRole, hasPermission, isAdmin } = useAuth();
 
   const navigationItems = [
-    { id: "dashboard", label: "📊 Tableau de bord", icon: "📊", roles: ["admin", "quality_technician", "production_manager", "operator"] },
-    { id: "quality", label: "🧪 Contrôle Qualité", icon: "🧪", roles: ["admin", "quality_technician", "operator"] },
-    { id: "energy", label: "⚡ Énergie", icon: "⚡", roles: ["admin", "production_manager"] },
-    { id: "waste", label: "♻️ Déchets", icon: "♻️", roles: ["admin", "production_manager"] },
-    { id: "documents", label: "📋 Documents", icon: "📋", roles: ["admin", "quality_technician"] },
-    { id: "testing", label: "🔬 Campagnes", icon: "🔬", roles: ["admin", "quality_technician"] },
-    { id: "profile", label: "👤 Mon Profil", icon: "👤", roles: ["admin", "quality_technician", "production_manager", "operator"] },
-    { id: "settings", label: "⚙️ Paramètres", icon: "⚙️", roles: ["admin", "quality_technician"] }
+    { 
+      id: "dashboard", 
+      label: "📊 Tableau de bord", 
+      icon: "📊", 
+      permission: "view_dashboard"
+    },
+    { 
+      id: "quality", 
+      label: "🧪 Contrôle Qualité", 
+      icon: "🧪", 
+      permission: "view_quality_control"
+    },
+    { 
+      id: "energy", 
+      label: "⚡ Énergie", 
+      icon: "⚡", 
+      permission: "view_energy_monitoring"
+    },
+    { 
+      id: "waste", 
+      label: "♻️ Déchets", 
+      icon: "♻️", 
+      permission: "view_waste_management"
+    },
+    { 
+      id: "documents", 
+      label: "📋 Documents", 
+      icon: "📋", 
+      permission: "view_documents"
+    },
+    { 
+      id: "testing", 
+      label: "🔬 Campagnes", 
+      icon: "🔬", 
+      permission: "view_testing_campaigns"
+    },
+    { 
+      id: "profile", 
+      label: "👤 Mon Profil", 
+      icon: "👤", 
+      permission: null // Always visible
+    },
+    { 
+      id: "settings", 
+      label: "⚙️ Paramètres", 
+      icon: "⚙️", 
+      permission: "view_settings"
+    },
+    { 
+      id: "admin", 
+      label: "🛠️ Administration", 
+      icon: "🛠️", 
+      permission: "manage_users",
+      adminOnly: true
+    }
   ];
 
-  const visibleItems = navigationItems.filter(item => 
-    !userRole || item.roles.includes(userRole)
-  );
+  const visibleItems = navigationItems.filter(item => {
+    if (item.adminOnly && !isAdmin()) return false;
+    if (!item.permission) return true;
+    return hasPermission(item.permission);
+  });
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2">
@@ -45,6 +94,20 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               <span className="hidden sm:inline">{item.label.replace(/^[^\s]+ /, '')}</span>
             </Button>
           ))}
+          
+          {/* Role indicator */}
+          {userRole && (
+            <div className="flex items-center ml-4 px-3 py-1 bg-gray-100 rounded-full">
+              <span className="text-xs font-medium text-gray-600">
+                {userRole === 'admin' ? '🛠️ Admin' : 
+                 userRole === 'quality_manager' ? '👨‍💼 Chef Qualité' :
+                 userRole === 'quality_controller' ? '🔍 Contrôleur' :
+                 userRole === 'technician' ? '🔧 Technicien' :
+                 userRole === 'production_manager' ? '🏭 Chef Prod.' :
+                 '👤 Opérateur'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </nav>
