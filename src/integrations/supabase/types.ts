@@ -127,6 +127,150 @@ export type Database = {
           },
         ]
       }
+      dimensional_surface_measurements: {
+        Row: {
+          created_at: string | null
+          dimensional_test_id: string
+          id: string
+          is_conform: boolean | null
+          max_gap: number | null
+          measurement_type: string
+          tolerance: number
+          value_1: number | null
+          value_10: number | null
+          value_2: number | null
+          value_3: number | null
+          value_4: number | null
+          value_5: number | null
+          value_6: number | null
+          value_7: number | null
+          value_8: number | null
+          value_9: number | null
+          value_label: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dimensional_test_id: string
+          id?: string
+          is_conform?: boolean | null
+          max_gap?: number | null
+          measurement_type: string
+          tolerance: number
+          value_1?: number | null
+          value_10?: number | null
+          value_2?: number | null
+          value_3?: number | null
+          value_4?: number | null
+          value_5?: number | null
+          value_6?: number | null
+          value_7?: number | null
+          value_8?: number | null
+          value_9?: number | null
+          value_label?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dimensional_test_id?: string
+          id?: string
+          is_conform?: boolean | null
+          max_gap?: number | null
+          measurement_type?: string
+          tolerance?: number
+          value_1?: number | null
+          value_10?: number | null
+          value_2?: number | null
+          value_3?: number | null
+          value_4?: number | null
+          value_5?: number | null
+          value_6?: number | null
+          value_7?: number | null
+          value_8?: number | null
+          value_9?: number | null
+          value_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dimensional_surface_measurements_dimensional_test_id_fkey"
+            columns: ["dimensional_test_id"]
+            isOneToOne: false
+            referencedRelation: "dimensional_surface_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dimensional_surface_tests: {
+        Row: {
+          code: string
+          controller_id: string | null
+          created_at: string | null
+          created_by: string | null
+          defect_percent: number | null
+          format: string | null
+          id: string
+          is_conform: boolean | null
+          lighting_lux: number | null
+          lot_id: string | null
+          surface_tested: number | null
+          test_date: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          code: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          defect_percent?: number | null
+          format?: string | null
+          id?: string
+          is_conform?: boolean | null
+          lighting_lux?: number | null
+          lot_id?: string | null
+          surface_tested?: number | null
+          test_date?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          code?: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          defect_percent?: number | null
+          format?: string | null
+          id?: string
+          is_conform?: boolean | null
+          lighting_lux?: number | null
+          lot_id?: string | null
+          surface_tested?: number | null
+          test_date?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dimensional_surface_tests_controller_id_fkey"
+            columns: ["controller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dimensional_surface_tests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dimensional_surface_tests_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "production_lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       energy_consumption: {
         Row: {
           consumption_kwh: number
@@ -162,6 +306,127 @@ export type Database = {
           source?: Database["public"]["Enums"]["energy_source"]
         }
         Relationships: []
+      }
+      equipment_calibration: {
+        Row: {
+          calibration_certificate: string | null
+          created_at: string | null
+          equipment_name: string
+          equipment_type: string
+          id: string
+          is_active: boolean | null
+          last_calibration_date: string
+          next_calibration_date: string
+          serial_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          calibration_certificate?: string | null
+          created_at?: string | null
+          equipment_name: string
+          equipment_type: string
+          id?: string
+          is_active?: boolean | null
+          last_calibration_date: string
+          next_calibration_date: string
+          serial_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          calibration_certificate?: string | null
+          created_at?: string | null
+          equipment_name?: string
+          equipment_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_calibration_date?: string
+          next_calibration_date?: string
+          serial_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      humidity_controls: {
+        Row: {
+          code: string
+          controller_id: string | null
+          created_at: string | null
+          created_by: string | null
+          fnc_no: string | null
+          humidity: number
+          id: string
+          is_conform: boolean | null
+          lot_id: string | null
+          section: string | null
+          silo_no: string | null
+          spec_max: number
+          spec_min: number
+          test_date: string
+          test_hour: string | null
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          code: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fnc_no?: string | null
+          humidity: number
+          id?: string
+          is_conform?: boolean | null
+          lot_id?: string | null
+          section?: string | null
+          silo_no?: string | null
+          spec_max: number
+          spec_min: number
+          test_date?: string
+          test_hour?: string | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          code?: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fnc_no?: string | null
+          humidity?: number
+          id?: string
+          is_conform?: boolean | null
+          lot_id?: string | null
+          section?: string | null
+          silo_no?: string | null
+          spec_max?: number
+          spec_min?: number
+          test_date?: string
+          test_hour?: string | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "humidity_controls_controller_id_fkey"
+            columns: ["controller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "humidity_controls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "humidity_controls_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "production_lots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -275,6 +540,42 @@ export type Database = {
         }
         Relationships: []
       }
+      quality_standards: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          parameters: Json
+          standard_code: string
+          standard_name: string
+          tolerance_values: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parameters: Json
+          standard_code: string
+          standard_name: string
+          tolerance_values: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parameters?: Json
+          standard_code?: string
+          standard_name?: string
+          tolerance_values?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       quality_tests: {
         Row: {
           break_resistance_n: number | null
@@ -340,6 +641,132 @@ export type Database = {
             columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resistance_test_samples: {
+        Row: {
+          created_at: string | null
+          force: number
+          id: string
+          is_conform: boolean | null
+          load_n: number
+          modulus_of_rupture: number | null
+          resistance_test_id: string
+          rupture_resistance: number | null
+          sample_no: number
+          thickness: number
+          width: number
+        }
+        Insert: {
+          created_at?: string | null
+          force: number
+          id?: string
+          is_conform?: boolean | null
+          load_n: number
+          modulus_of_rupture?: number | null
+          resistance_test_id: string
+          rupture_resistance?: number | null
+          sample_no: number
+          thickness: number
+          width: number
+        }
+        Update: {
+          created_at?: string | null
+          force?: number
+          id?: string
+          is_conform?: boolean | null
+          load_n?: number
+          modulus_of_rupture?: number | null
+          resistance_test_id?: string
+          rupture_resistance?: number | null
+          sample_no?: number
+          thickness?: number
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resistance_test_samples_resistance_test_id_fkey"
+            columns: ["resistance_test_id"]
+            isOneToOne: false
+            referencedRelation: "resistance_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resistance_tests: {
+        Row: {
+          code: string
+          controller_id: string | null
+          created_at: string | null
+          created_by: string | null
+          distance: number | null
+          format: string | null
+          id: string
+          is_conform: boolean | null
+          lot_id: string | null
+          roller_diameter: number | null
+          rubber_thickness: number | null
+          span: number | null
+          test_date: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          code: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          distance?: number | null
+          format?: string | null
+          id?: string
+          is_conform?: boolean | null
+          lot_id?: string | null
+          roller_diameter?: number | null
+          rubber_thickness?: number | null
+          span?: number | null
+          test_date?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          code?: string
+          controller_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          distance?: number | null
+          format?: string | null
+          id?: string
+          is_conform?: boolean | null
+          lot_id?: string | null
+          roller_diameter?: number | null
+          rubber_thickness?: number | null
+          span?: number | null
+          test_date?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resistance_tests_controller_id_fkey"
+            columns: ["controller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resistance_tests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resistance_tests_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "production_lots"
             referencedColumns: ["id"]
           },
         ]
@@ -577,7 +1004,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_modulus_of_rupture: {
+        Args: { force: number; width: number; thickness: number }
+        Returns: number
+      }
+      check_dimensional_conformity: {
+        Args: { measurements: number[]; tolerance: number }
+        Returns: boolean
+      }
+      check_humidity_conformity: {
+        Args: { humidity: number; spec_min: number; spec_max: number }
+        Returns: boolean
+      }
     }
     Enums: {
       defect_type:
