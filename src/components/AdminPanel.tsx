@@ -25,8 +25,8 @@ const AdminPanel = () => {
         .from("profiles")
         .select(`
           *,
-          user_roles (
-            roles (
+          user_roles!inner (
+            roles!inner (
               role_name,
               role_key
             )
@@ -74,19 +74,13 @@ const AdminPanel = () => {
     enabled: isAdmin(),
   });
 
-  // Fetch activity logs
+  // Fetch activity logs - simplified query without profiles join
   const { data: activityLogs } = useQuery({
     queryKey: ["admin-activity-logs"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_activity_logs")
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
       
@@ -94,6 +88,20 @@ const AdminPanel = () => {
       return data;
     },
     enabled: isAdmin(),
+  });
+
+  // Fetch user details separately for activity logs
+  const { data: userProfiles } = useQuery({
+    queryKey: ["user-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email");
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin() && activityLogs?.length > 0,
   });
 
   // Mutation to assign role to user
@@ -147,6 +155,11 @@ const AdminPanel = () => {
         module: "admin",
         details,
       });
+  };
+
+  // Helper function to get user profile by ID
+  const getUserProfile = (userId: string) => {
+    return userProfiles?.find(profile => profile.id === userId) || { full_name: "Utilisateur inconnu", email: "" };
   };
 
   if (!isAdmin()) {
@@ -226,7 +239,9 @@ const AdminPanel = () => {
                       <span className="text-sm text-gray-500 ml-2">{user.email}</span>
                     </div>
                     <Badge variant="outline">
-                      {user.user_roles?.[0]?.roles?.role_name || "Aucun rôle"}
+                      {Array.isArray(user.user_roles) && user.user_roles.length > 0 
+                        ? user.user_roles[0]?.roles?.role_name || "Aucun rôle"
+                        : "Aucun rôle"}
                     </Badge>
                   </div>
                 ))}
@@ -274,22 +289,27 @@ const AdminPanel = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {activityLogs?.map((log) => (
-              <div key={log.id} className="flex items-center justify-between p-2 border-b">
-                <div>
-                  <span className="font-medium">{log.profiles?.full_name || "Utilisateur inconnu"}</span>
-                  <span className="text-sm text-gray-500 ml-2">{log.action}</span>
-                  {log.module && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      {log.module}
-                    </Badge>
-                  )}
+            {activityLogs?.map((log) => {
+              const userProfile = log.user_id ? getUserProfile(log.user_id) : null;
+              return (
+                <div key={log.id} className="flex items-center justify-between p-2 border-b">
+                  <div>
+                    <span className="font-medium">
+                      {userProfile?.full_name || "Utilisateur inconnu"}
+                    </span>
+                    <span className="text-sm text-gray-500 ml-2">{log.action}</span>
+                    {log.module && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {log.module}
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {new Date(log.created_at).toLocaleString('fr-FR')}
+                  </span>
                 </div>
-                <span className="text-xs text-gray-400">
-                  {new Date(log.created_at).toLocaleString('fr-FR')}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
