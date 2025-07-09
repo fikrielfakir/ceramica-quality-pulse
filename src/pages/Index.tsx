@@ -48,7 +48,7 @@ const Index = () => {
       <ProtectedRoute>
         <div className="min-h-screen bg-gray-50">
           <Header />
-          <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <Navigation />
           <main className="flex-1">
             {renderContent()}
           </main>

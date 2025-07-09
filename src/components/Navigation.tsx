@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const location = useLocation();
-  const { hasRole } = useAuth();
+  const { isAdmin } = useAuth();
 
   const navItems = [
     { path: "/", label: "🏠 Tableau de bord", icon: "🏠" },
@@ -20,7 +20,7 @@ const Navigation = () => {
   ];
 
   // Add admin panel for admins
-  if (hasRole('admin')) {
+  if (isAdmin()) {
     navItems.push({ path: "/admin", label: "🛠️ Administration", icon: "🛠️" });
   }
 
