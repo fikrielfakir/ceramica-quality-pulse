@@ -38,8 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               // First, ensure user profile exists
               await ensureUserProfile(session.user);
               
-              // Then fetch role and permissions
-              const { data: roleData } = await supabase
+              // Try to fetch existing role first
+              const { data: roleData, error: roleError } = await supabase
                 .from('user_roles')
                 .select(`
                   roles (
@@ -61,14 +61,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   ?.map((rp: any) => rp.permissions?.permission_key)
                   .filter(Boolean) || [];
                 setUserPermissions(permissions);
+              } else if (!roleError || roleError.code === 'PGRST116') {
+                // User has no role, assign default using the security definer function
+                try {
+                  const { error: assignError } = await supabase
+                    .rpc('assign_default_role', { user_id: session.user.id });
+                    
+                  if (!assignError) {
+                    // Set default role immediately
+                    setUserRole('operator');
+                    setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
+                  } else {
+                    console.error('Error assigning default role via RPC:', assignError);
+                    // Fallback to default values
+                    setUserRole('operator');
+                    setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
+                  }
+                } catch (rpcError) {
+                  console.error('RPC call failed:', rpcError);
+                  // Fallback to default values
+                  setUserRole('operator');
+                  setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
+                }
               } else {
-                // Assign default role if none exists
-                await assignDefaultRole(session.user.id);
+                console.error('Error fetching user role:', roleError);
+                // Fallback to default role
                 setUserRole('operator');
                 setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
               }
             } catch (error) {
-              console.error('Error fetching user role:', error);
+              console.error('Error in role assignment:', error);
               // Fallback to default role
               setUserRole('operator');
               setUserPermissions(['view_dashboard', 'view_quality_control', 'create_quality_tests']);
@@ -118,32 +140,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Error ensuring user profile:', error);
-    }
-  };
-
-  const assignDefaultRole = async (userId: string) => {
-    try {
-      // Get the operator role
-      const { data: operatorRole } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('role_key', 'operator')
-        .single();
-
-      if (operatorRole) {
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: userId,
-            role_id: operatorRole.id
-          });
-        
-        if (error) {
-          console.error('Error assigning default role:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error assigning default role:', error);
     }
   };
 
