@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // User has no role, assign default using the security definer function
                 try {
                   const { error: assignError } = await supabase
-                    .rpc('assign_default_role', { user_id: session.user.id });
+                    .rpc('assign_default_role', { target_user_id: session.user.id });
                     
                   if (!assignError) {
                     // Set default role immediately
