@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role and permissions with a slight delay
+          // Fetch user role and permissions with setTimeout to avoid recursion
           setTimeout(async () => {
             try {
               // First, ensure user profile exists

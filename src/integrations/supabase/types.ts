@@ -589,6 +589,7 @@ export type Database = {
           operator_id: string | null
           status: Database["public"]["Enums"]["test_status"] | null
           test_date: string | null
+          test_type: string | null
           thickness_mm: number | null
           updated_at: string | null
           water_absorption_percent: number | null
@@ -606,6 +607,7 @@ export type Database = {
           operator_id?: string | null
           status?: Database["public"]["Enums"]["test_status"] | null
           test_date?: string | null
+          test_type?: string | null
           thickness_mm?: number | null
           updated_at?: string | null
           water_absorption_percent?: number | null
@@ -623,6 +625,7 @@ export type Database = {
           operator_id?: string | null
           status?: Database["public"]["Enums"]["test_status"] | null
           test_date?: string | null
+          test_type?: string | null
           thickness_mm?: number | null
           updated_at?: string | null
           water_absorption_percent?: number | null
@@ -808,6 +811,13 @@ export type Database = {
             referencedRelation: "roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_with_permissions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       roles: {
@@ -953,6 +963,13 @@ export type Database = {
             referencedRelation: "roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_with_permissions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       waste_records: {
@@ -1001,9 +1018,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_permissions: {
+        Row: {
+          permissions: string[] | null
+          role_key: string | null
+          role_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_roles_with_permissions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          is_system_role: boolean | null
+          permissions: Json | null
+          role_key: string | null
+          role_name: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      assign_default_role: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
       calculate_modulus_of_rupture: {
         Args: { force: number; width: number; thickness: number }
         Returns: number
@@ -1014,6 +1058,10 @@ export type Database = {
       }
       check_humidity_conformity: {
         Args: { humidity: number; spec_min: number; spec_max: number }
+        Returns: boolean
+      }
+      is_admin_user: {
+        Args: { user_id?: string }
         Returns: boolean
       }
     }

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-// Enhanced Quality Tests Hook
+// Enhanced Quality Tests Hook - Fixed to work with updated database schema
 export const useEnhancedQualityTests = () => {
   return useQuery({
     queryKey: ["enhanced-quality-tests"],
