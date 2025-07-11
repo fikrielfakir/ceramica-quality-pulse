@@ -5,30 +5,46 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission, userRole } = useAuth();
 
-  const navItems = [
-    { path: "/", label: "Tableau de bord", icon: "🏠" },
-    { path: "/quality-control", label: "Contrôle Qualité", icon: "🔬" },
-    { path: "/enhanced-quality", label: "Tests & Mesures", icon: "🧪" },
-    { path: "/energy", label: "Suivi Énergétique", icon: "⚡" },
-    { path: "/waste", label: "Gestion Déchets", icon: "♻️" },
-    { path: "/documents", label: "Documents", icon: "📄" },
-    { path: "/testing-campaigns", label: "Campagnes", icon: "🎯" },
-    { path: "/profile", label: "Profil", icon: "👤" },
-    { path: "/settings", label: "Paramètres", icon: "⚙️" },
-  ];
+  const getNavItems = () => {
+    const baseItems = [
+      { path: "/", label: "Tableau de bord", icon: "🏠", permission: "view_dashboard" }
+    ];
 
-  // Add admin panel for admins
-  if (isAdmin()) {
-    navItems.push({ path: "/admin", label: "🛠️ Administration", icon: "🛠️" });
-  }
+    const conditionalItems = [
+      { path: "/quality-control", label: "Contrôle Qualité", icon: "🔬", permission: "view_quality_tests" },
+      { path: "/enhanced-quality", label: "Tests & Mesures", icon: "🧪", permission: "create_quality_tests" },
+      { path: "/energy", label: "Suivi Énergétique", icon: "⚡", permission: "view_energy" },
+      { path: "/waste", label: "Gestion Déchets", icon: "♻️", permission: "view_production" },
+      { path: "/documents", label: "Documents", icon: "📄", permission: "view_quality_tests" },
+      { path: "/testing-campaigns", label: "Campagnes", icon: "🎯", permission: "view_quality_tests" },
+      { path: "/profile", label: "Profil", icon: "👤", permission: null },
+      { path: "/settings", label: "Paramètres", icon: "⚙️", permission: null }
+    ];
+
+    // Filter items based on permissions
+    const filteredItems = conditionalItems.filter(item => 
+      !item.permission || hasPermission(item.permission)
+    );
+
+    const allItems = [...baseItems, ...filteredItems];
+
+    // Add admin panel for admins
+    if (isAdmin()) {
+      allItems.push({ path: "/admin", label: "🛠️ Administration", icon: "🛠️", permission: null });
+    }
+
+    return allItems;
+  };
+
+  const navItems = getNavItems();
 
   return (
     <nav className="bg-white shadow-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex space-x-8">
+          <div className="flex space-x-8 overflow-x-auto">
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -43,6 +59,13 @@ const Navigation = () => {
                 {item.label}
               </Link>
             ))}
+          </div>
+          
+          {/* Role indicator */}
+          <div className="flex items-center">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              {userRole}
+            </span>
           </div>
         </div>
       </div>

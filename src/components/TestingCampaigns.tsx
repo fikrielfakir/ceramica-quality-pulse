@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,80 +9,116 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useQualityActions } from "@/hooks/useQualityActions";
+import { useEnergyActions } from "@/hooks/useEnergyActions";
+import { useMaintenanceActions } from "@/hooks/useMaintenanceActions";
+import { supabase } from "@/integrations/supabase/client";
 
 const TestingCampaigns = () => {
   const { toast } = useToast();
+  const { hasPermission, userRole } = useAuth();
+  const { createQualityTest, generateReport, createCorrectiveAction, downloadReport, loading: qualityLoading } = useQualityActions();
+  const { createEnergyAlert, resolveEnergyAlert, recordEnergyConsumption, loading: energyLoading } = useEnergyActions();
+  const { scheduleMaintenance, updateMaintenanceStatus, loading: maintenanceLoading } = useMaintenanceActions();
+
   const [selectedCampaign, setSelectedCampaign] = useState("");
   const [newCampaignName, setNewCampaignName] = useState("");
   const [newCampaignType, setNewCampaignType] = useState("");
   const [campaignNotes, setCampaignNotes] = useState("");
+  
+  // Backend data states
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [qualityTests, setQualityTests] = useState<any[]>([]);
+  const [energyAlerts, setEnergyAlerts] = useState<any[]>([]);
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState<any[]>([]);
 
-  const activeCampaigns = [
-    { 
-      id: "CAMP-2024-001", 
-      name: "Contrôle Qualité Mars", 
-      type: "Qualité Produit",
-      progress: 75, 
-      tests: 48, 
-      totalTests: 64,
-      status: "En cours"
-    },
-    { 
-      id: "CAMP-2024-002", 
-      name: "Audit Énergétique", 
-      type: "Énergie",
-      progress: 40, 
-      tests: 12, 
-      totalTests: 30,
-      status: "En cours"
-    },
-    { 
-      id: "CAMP-2024-003", 
-      name: "Tests Environnementaux", 
-      type: "Environnement",
-      progress: 90, 
-      tests: 27, 
-      totalTests: 30,
-      status: "Finalisation"
+  // Load data from backend
+  useEffect(() => {
+    loadCampaigns();
+    loadQualityTests();
+    loadEnergyAlerts();
+    loadMaintenanceSchedules();
+  }, []);
+
+  const loadCampaigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('testing_campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setCampaigns(data || []);
+    } catch (error) {
+      console.error('Error loading campaigns:', error);
     }
-  ];
+  };
 
-  const testProtocols = [
-    { name: "ISO 13006 - Carreaux céramiques", category: "Qualité", duration: "2h" },
-    { name: "ISO 10545-3 - Absorption d'eau", category: "Physique", duration: "24h" },
-    { name: "ISO 10545-4 - Résistance flexion", category: "Mécanique", duration: "1h" },
-    { name: "Analyse émissions COV", category: "Environnement", duration: "4h" },
-    { name: "Efficacité énergétique fours", category: "Énergie", duration: "8h" }
-  ];
-
-  const recentResults = [
-    { 
-      test: "Résistance flexion", 
-      lot: "LOT-2024-015", 
-      result: "Conforme", 
-      value: "1450 N",
-      operator: "A. Bennani",
-      date: "15/03/2024"
-    },
-    { 
-      test: "Absorption eau", 
-      lot: "LOT-2024-014", 
-      result: "Non-conforme", 
-      value: "3.2%",
-      operator: "M. Alami",
-      date: "14/03/2024"
-    },
-    { 
-      test: "Dimensions", 
-      lot: "LOT-2024-013", 
-      result: "Conforme", 
-      value: "600.2mm",
-      operator: "S. Tazi",
-      date: "14/03/2024"
+  const loadQualityTests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('quality_tests')
+        .select(`
+          *,
+          production_lots(lot_number),
+          profiles(full_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      setQualityTests(data || []);
+    } catch (error) {
+      console.error('Error loading quality tests:', error);
     }
-  ];
+  };
 
-  const handleStartCampaign = () => {
+  const loadEnergyAlerts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('energy_alerts')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      setEnergyAlerts(data || []);
+    } catch (error) {
+      console.error('Error loading energy alerts:', error);
+    }
+  };
+
+  const loadMaintenanceSchedules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('maintenance_schedules')
+        .select(`
+          *,
+          profiles(full_name)
+        `)
+        .in('status', ['scheduled', 'in_progress'])
+        .order('scheduled_date', { ascending: true })
+        .limit(5);
+      
+      if (error) throw error;
+      setMaintenanceSchedules(data || []);
+    } catch (error) {
+      console.error('Error loading maintenance schedules:', error);
+    }
+  };
+
+  const handleStartCampaign = async () => {
+    if (!hasPermission('create_quality_tests')) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les permissions pour créer des campagnes",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!newCampaignName || !newCampaignType) {
       toast({
         title: "Erreur",
@@ -92,62 +128,132 @@ const TestingCampaigns = () => {
       return;
     }
 
-    toast({
-      title: "Campagne lancée",
-      description: `Nouvelle campagne "${newCampaignName}" créée et démarrée avec succès`,
+    try {
+      const { error } = await supabase
+        .from('testing_campaigns')
+        .insert({
+          campaign_name: newCampaignName,
+          description: campaignNotes,
+          start_date: new Date().toISOString().split('T')[0],
+          status: 'En cours',
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Campagne lancée",
+        description: `Nouvelle campagne "${newCampaignName}" créée et démarrée avec succès`,
+      });
+      
+      // Reset form and reload data
+      setNewCampaignName("");
+      setNewCampaignType("");
+      setCampaignNotes("");
+      loadCampaigns();
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la création de la campagne",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNewQualityTest = async () => {
+    const success = await createQualityTest({
+      test_type: 'Contrôle général',
+      status: 'En cours',
+      operator_id: (await supabase.auth.getUser()).data.user?.id,
+      test_date: new Date().toISOString().split('T')[0]
     });
     
-    // Reset form
-    setNewCampaignName("");
-    setNewCampaignType("");
-    setCampaignNotes("");
+    if (success) {
+      loadQualityTests();
+    }
   };
 
-  const handleScheduleTest = (protocol: string) => {
-    toast({
-      title: "Test programmé",
-      description: `Test "${protocol}" ajouté à la planification avec succès`,
-    });
+  const handleGenerateReport = async (testId: string, reportType: string) => {
+    const report = await generateReport(testId, reportType);
+    if (report) {
+      toast({
+        title: "Rapport généré",
+        description: `Rapport ${reportType} créé avec l'ID: ${report.id}`,
+      });
+    }
   };
 
-  const handleViewResults = (campaignId: string) => {
-    toast({
-      title: "Résultats de campagne",
-      description: `Ouverture des résultats détaillés pour ${campaignId}`,
+  const handleCorrectiveAction = async (testId: string) => {
+    const success = await createCorrectiveAction(testId, {
+      action_type: 'Investigation',
+      description: 'Investigation requise pour non-conformité détectée',
+      priority: 'high',
+      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 7 days from now
     });
+    
+    if (success) {
+      toast({
+        title: "Action corrective initiée",
+        description: "Procédure corrective créée et assignée"
+      });
+    }
   };
 
-  const handleCorrectiveAction = (lotId: string) => {
-    toast({
-      title: "Action corrective initiée",
-      description: `Procédure corrective initiée pour ${lotId} - Rapport généré`,
-    });
+  const handleResolveEnergyAlert = async (alertId: string) => {
+    const success = await resolveEnergyAlert(alertId);
+    if (success) {
+      loadEnergyAlerts();
+    }
   };
 
-  const handleModifyPlanning = () => {
-    toast({
-      title: "Planning modifié",
-      description: "Planning des tests mis à jour avec succès",
+  const handleScheduleMaintenance = async () => {
+    const success = await scheduleMaintenance({
+      equipment_name: 'Four principal',
+      maintenance_type: 'preventive',
+      description: 'Maintenance préventive programmée',
+      scheduled_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+      priority: 'medium'
     });
+    
+    if (success) {
+      loadMaintenanceSchedules();
+    }
   };
 
-  const handleProcessActions = () => {
-    toast({
-      title: "Actions traitées",
-      description: "Procédures correctives initiées et notifications envoyées",
-    });
-  };
-
-  const handleScheduleRevision = () => {
-    toast({
-      title: "Révision programmée",
-      description: "Planning de révision des certifications mis à jour",
-    });
+  // Permission-based button rendering
+  const renderActionButton = (permission: string, onClick: () => void, children: React.ReactNode, variant: any = "default") => {
+    if (!hasPermission(permission)) {
+      return null;
+    }
+    return (
+      <Button variant={variant} onClick={onClick} size="sm">
+        {children}
+      </Button>
+    );
   };
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
-      {/* Campagnes actives */}
+      {/* Role and permissions display */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            👤 Votre Profil - Rôle: {userRole}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {hasPermission('create_quality_tests') && <Badge>Créer Tests</Badge>}
+            {hasPermission('generate_reports') && <Badge>Générer Rapports</Badge>}
+            {hasPermission('corrective_actions') && <Badge>Actions Correctives</Badge>}
+            {hasPermission('manage_energy') && <Badge>Gérer Énergie</Badge>}
+            {hasPermission('schedule_maintenance') && <Badge>Programmer Maintenance</Badge>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Active Campaigns */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -156,35 +262,21 @@ const TestingCampaigns = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {activeCampaigns.map((campaign, index) => (
-              <div key={index} className="p-4 border rounded-lg">
+            {campaigns.map((campaign) => (
+              <div key={campaign.id} className="p-4 border rounded-lg">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h4 className="font-medium text-sm">{campaign.name}</h4>
-                    <p className="text-xs text-gray-600">{campaign.id}</p>
+                    <h4 className="font-medium text-sm">{campaign.campaign_name}</h4>
+                    <p className="text-xs text-gray-600">{campaign.id.slice(0, 8)}</p>
                   </div>
                   <Badge variant={campaign.status === "En cours" ? "default" : "secondary"}>
                     {campaign.status}
                   </Badge>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span>Progression</span>
-                    <span>{campaign.tests}/{campaign.totalTests} tests</span>
-                  </div>
-                  <Progress value={campaign.progress} className="h-2" />
-                  <div className="text-xs text-gray-600">{campaign.progress}% terminé</div>
-                </div>
-                
                 <div className="mt-3 flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleViewResults(campaign.id)}
-                  >
-                    Voir résultats
-                  </Button>
+                  {renderActionButton('view_quality_tests', () => toast({ title: "Détails", description: `Affichage des détails de ${campaign.campaign_name}` }), "Voir détails", "outline")}
+                  {renderActionButton('view_trends', () => toast({ title: "Analyse", description: "Ouverture de l'analyse des tendances" }), "Analyser tendance", "outline")}
                 </div>
               </div>
             ))}
@@ -193,7 +285,7 @@ const TestingCampaigns = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Nouvelle campagne */}
+        {/* New Campaign */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -228,27 +320,6 @@ const TestingCampaigns = () => {
             </div>
 
             <div>
-              <Label htmlFor="protocols">Protocoles de test à inclure</Label>
-              <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded p-2">
-                {testProtocols.map((protocol, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                    <div className="flex-1">
-                      <span className="text-sm font-medium">{protocol.name}</span>
-                      <div className="text-xs text-gray-600">{protocol.category} • {protocol.duration}</div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleScheduleTest(protocol.name)}
-                    >
-                      Ajouter
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <Label htmlFor="campaign-notes">Notes & Objectifs</Label>
               <Textarea 
                 id="campaign-notes" 
@@ -259,131 +330,98 @@ const TestingCampaigns = () => {
               />
             </div>
 
-            <Button 
-              onClick={handleStartCampaign}
-              className="w-full"
-            >
-              Lancer la Campagne
-            </Button>
+            {renderActionButton('create_quality_tests', handleStartCampaign, "Lancer la Campagne")}
           </CardContent>
         </Card>
 
-        {/* Résultats récents */}
+        {/* Quality Tests */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              📊 Résultats Récents
+              📊 Tests Qualité Récents
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentResults.map((result, index) => (
-                <div key={index} className="p-3 border rounded-lg">
+              {qualityTests.map((test) => (
+                <div key={test.id} className="p-3 border rounded-lg">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-medium text-sm">{result.test}</h4>
+                      <h4 className="font-medium text-sm">{test.test_type}</h4>
                       <p className="text-xs text-gray-600">
-                        {result.lot} • {result.operator} • {result.date}
+                        Lot: {test.production_lots?.lot_number || 'N/A'} • {test.test_date}
                       </p>
                     </div>
-                    <Badge variant={result.result === "Conforme" ? "default" : "destructive"}>
-                      {result.result}
+                    <Badge variant={test.status === "Conforme" ? "default" : "destructive"}>
+                      {test.status}
                     </Badge>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Valeur: {result.value}</span>
-                    {result.result === "Non-conforme" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCorrectiveAction(result.lot)}
-                      >
-                        Action corrective
-                      </Button>
-                    )}
+                  <div className="flex gap-2 flex-wrap">
+                    {renderActionButton('view_quality_tests', () => toast({ title: "Détails", description: `Détails du test ${test.id}` }), "Détails", "outline")}
+                    {renderActionButton('generate_reports', () => handleGenerateReport(test.id, 'certificate'), "Générer certificat", "outline")}
+                    {renderActionButton('generate_reports', () => handleGenerateReport(test.id, 'analysis'), "Aperçu Rapport", "outline")}
+                    {test.status === "Non-conforme" && renderActionButton('corrective_actions', () => handleCorrectiveAction(test.id), "Action corrective", "destructive")}
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">📈 Statistiques du Mois</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-blue-700">Tests réalisés:</span>
-                  <span className="font-bold ml-2">156</span>
-                </div>
-                <div>
-                  <span className="text-blue-700">Taux conformité:</span>
-                  <span className="font-bold ml-2 text-green-600">94.2%</span>
-                </div>
-                <div>
-                  <span className="text-blue-700">Protocoles actifs:</span>
-                  <span className="font-bold ml-2">12</span>
-                </div>
-                <div>
-                  <span className="text-blue-700">Opérateurs:</span>
-                  <span className="font-bold ml-2">8</span>
-                </div>
-              </div>
+            <div className="mt-4 flex gap-2">
+              {renderActionButton('create_quality_tests', handleNewQualityTest, "Nouveau Test Qualité")}
+              {renderActionButton('create_quality_tests', () => toast({ title: "Contrôle", description: "Nouveau contrôle qualité initialisé" }), "Nouveau Contrôle Qualité")}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Planification et alertes */}
+      {/* Energy and Maintenance Actions */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            📅 Planification & Alertes
+            📅 Planification & Optimisation
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-yellow-50 rounded-lg">
-              <h4 className="font-medium text-yellow-800">Tests Programmés</h4>
-              <p className="text-sm text-yellow-600 mb-3">
-                ISO 10545-4 - Demain 9h00<br/>
-                Analyse COV - Vendredi 14h00
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleModifyPlanning}
-              >
-                Modifier planning
-              </Button>
+              <h4 className="font-medium text-yellow-800">Alertes Énergie</h4>
+              <div className="space-y-2 mt-2">
+                {energyAlerts.map((alert) => (
+                  <div key={alert.id} className="text-sm">
+                    <p className="text-yellow-600">{alert.message}</p>
+                    <div className="flex gap-2 mt-1">
+                      {renderActionButton('energy_alerts', () => handleResolveEnergyAlert(alert.id), "Corriger", "outline")}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {renderActionButton('manage_energy', () => toast({ title: "Objectifs", description: "Interface de suivi des objectifs énergétiques" }), "Suivi objectifs")}
             </div>
             
-            <div className="p-4 bg-red-50 rounded-lg">
-              <h4 className="font-medium text-red-800">Actions Requises</h4>
-              <p className="text-sm text-red-600 mb-3">
-                LOT-2024-014: Non-conformité<br/>
-                Calibrage équipement requis
-              </p>
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={handleProcessActions}
-              >
-                Traiter actions
-              </Button>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-800">Maintenance</h4>
+              <div className="space-y-2 mt-2">
+                {maintenanceSchedules.map((schedule) => (
+                  <div key={schedule.id} className="text-sm">
+                    <p className="text-blue-600">{schedule.equipment_name}</p>
+                    <p className="text-xs text-blue-500">{schedule.scheduled_date}</p>
+                  </div>
+                ))}
+              </div>
+              {renderActionButton('schedule_maintenance', handleScheduleMaintenance, "Programmer")}
             </div>
             
             <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium text-green-800">Certifications</h4>
+              <h4 className="font-medium text-green-800">Optimisation</h4>
               <p className="text-sm text-green-600 mb-3">
-                ISO 13006: Conforme<br/>
-                Prochaine révision: Mai 2024
+                Optimisation Détectée:<br/>
+                Réduction consommation -12%
               </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleScheduleRevision}
-              >
-                Programmer révision
-              </Button>
+              <div className="flex gap-2">
+                {renderActionButton('optimize_production', () => toast({ title: "Optimisation", description: "Optimisation appliquée avec succès" }), "Appliquer")}
+                {renderActionButton('view_analytics', () => toast({ title: "Audit RSE", description: "Audit RSE programmé" }), "Audit RSE", "outline")}
+              </div>
             </div>
           </div>
         </CardContent>
