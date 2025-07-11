@@ -1045,7 +1045,7 @@ export type Database = {
     }
     Functions: {
       assign_default_role: {
-        Args: { user_id: string }
+        Args: { target_user_id: string }
         Returns: undefined
       }
       calculate_modulus_of_rupture: {
