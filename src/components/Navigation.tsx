@@ -8,15 +8,15 @@ const Navigation = () => {
   const { isAdmin } = useAuth();
 
   const navItems = [
-    { path: "/", label: "🏠 Tableau de bord", icon: "🏠" },
-    { path: "/quality-control", label: "🔬 Contrôle Qualité", icon: "🔬" },
-    { path: "/enhanced-quality", label: "🧪 Tests & Mesures", icon: "🧪" },
-    { path: "/energy", label: "⚡ Suivi Énergétique", icon: "⚡" },
-    { path: "/waste", label: "♻️ Gestion Déchets", icon: "♻️" },
-    { path: "/documents", label: "📄 Documents", icon: "📄" },
-    { path: "/testing-campaigns", label: "🎯 Campagnes", icon: "🎯" },
-    { path: "/profile", label: "👤 Profil", icon: "👤" },
-    { path: "/settings", label: "⚙️ Paramètres", icon: "⚙️" },
+    { path: "/", label: "Tableau de bord", icon: "🏠" },
+    { path: "/quality-control", label: "Contrôle Qualité", icon: "🔬" },
+    { path: "/enhanced-quality", label: "Tests & Mesures", icon: "🧪" },
+    { path: "/energy", label: "Suivi Énergétique", icon: "⚡" },
+    { path: "/waste", label: "Gestion Déchets", icon: "♻️" },
+    { path: "/documents", label: "Documents", icon: "📄" },
+    { path: "/testing-campaigns", label: "Campagnes", icon: "🎯" },
+    { path: "/profile", label: "Profil", icon: "👤" },
+    { path: "/settings", label: "Paramètres", icon: "⚙️" },
   ];
 
   // Add admin panel for admins
