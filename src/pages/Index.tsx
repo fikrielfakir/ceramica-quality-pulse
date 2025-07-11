@@ -47,8 +47,6 @@ const Index = () => {
     <AuthProvider>
       <ProtectedRoute>
         <div className="min-h-screen bg-gray-50">
-          <Header />
-          <Navigation />
           <main className="flex-1">
             {renderContent()}
           </main>
