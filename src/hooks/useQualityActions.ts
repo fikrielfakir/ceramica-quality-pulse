@@ -111,22 +111,22 @@ export const useQualityActions = () => {
 
   const downloadReport = async (reportId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('quality_reports' as any)
         .select('*')
         .eq('id', reportId)
         .single();
 
-      if (!data) throw new Error('Rapport non trouvé');
+      if (error || !data) throw new Error('Rapport non trouvé');
 
       // Create downloadable content
-      const content = JSON.stringify(data.report_data, null, 2);
+      const content = JSON.stringify((data as any).report_data, null, 2);
       const blob = new Blob([content], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rapport-${data.report_type}-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `rapport-${(data as any).report_type}-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

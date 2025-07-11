@@ -178,7 +178,7 @@ const TestingCampaigns = () => {
     if (report) {
       toast({
         title: "Rapport généré",
-        description: `Rapport ${reportType} créé avec l'ID: ${report.id}`,
+        description: `Rapport ${reportType} créé avec l'ID: ${(report as any).id}`,
       });
     }
   };
@@ -387,10 +387,10 @@ const TestingCampaigns = () => {
               <h4 className="font-medium text-yellow-800">Alertes Énergie</h4>
               <div className="space-y-2 mt-2">
                 {energyAlerts.map((alert) => (
-                  <div key={alert.id} className="text-sm">
-                    <p className="text-yellow-600">{alert.message}</p>
+                  <div key={(alert as any).id} className="text-sm">
+                    <p className="text-yellow-600">{(alert as any).message}</p>
                     <div className="flex gap-2 mt-1">
-                      {renderActionButton('energy_alerts', () => handleResolveEnergyAlert(alert.id), "Corriger", "outline")}
+                      {renderActionButton('energy_alerts', () => handleResolveEnergyAlert((alert as any).id), "Corriger", "outline")}
                     </div>
                   </div>
                 ))}
@@ -402,9 +402,9 @@ const TestingCampaigns = () => {
               <h4 className="font-medium text-blue-800">Maintenance</h4>
               <div className="space-y-2 mt-2">
                 {maintenanceSchedules.map((schedule) => (
-                  <div key={schedule.id} className="text-sm">
-                    <p className="text-blue-600">{schedule.equipment_name}</p>
-                    <p className="text-xs text-blue-500">{schedule.scheduled_date}</p>
+                  <div key={(schedule as any).id} className="text-sm">
+                    <p className="text-blue-600">{(schedule as any).equipment_name}</p>
+                    <p className="text-xs text-blue-500">{(schedule as any).scheduled_date}</p>
                   </div>
                 ))}
               </div>
