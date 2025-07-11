@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useQualityActions } from "@/hooks/useQualityActions";
@@ -77,7 +76,7 @@ const TestingCampaigns = () => {
   const loadEnergyAlerts = async () => {
     try {
       const { data, error } = await supabase
-        .from('energy_alerts')
+        .from('energy_alerts' as any)
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -93,7 +92,7 @@ const TestingCampaigns = () => {
   const loadMaintenanceSchedules = async () => {
     try {
       const { data, error } = await supabase
-        .from('maintenance_schedules')
+        .from('maintenance_schedules' as any)
         .select(`
           *,
           profiles(full_name)

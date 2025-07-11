@@ -18,7 +18,7 @@ export const useEnergyActions = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('energy_alerts')
+        .from('energy_alerts' as any)
         .insert(alertData);
 
       if (error) throw error;
@@ -43,7 +43,7 @@ export const useEnergyActions = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('energy_alerts')
+        .from('energy_alerts' as any)
         .update({
           status: 'resolved',
           resolved_at: new Date().toISOString(),

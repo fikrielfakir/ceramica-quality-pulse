@@ -62,7 +62,7 @@ export const useQualityActions = () => {
       };
 
       const { data, error } = await supabase
-        .from('quality_reports')
+        .from('quality_reports' as any)
         .insert(reportData)
         .select()
         .single();
@@ -89,7 +89,7 @@ export const useQualityActions = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('corrective_actions')
+        .from('corrective_actions' as any)
         .insert({
           test_id: testId,
           ...actionData,
@@ -112,7 +112,7 @@ export const useQualityActions = () => {
   const downloadReport = async (reportId: string) => {
     try {
       const { data } = await supabase
-        .from('quality_reports')
+        .from('quality_reports' as any)
         .select('*')
         .eq('id', reportId)
         .single();

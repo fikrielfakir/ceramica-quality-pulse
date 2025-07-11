@@ -18,7 +18,7 @@ export const useMaintenanceActions = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('maintenance_schedules')
+        .from('maintenance_schedules' as any)
         .insert({
           ...maintenanceData,
           created_by: (await supabase.auth.getUser()).data.user?.id
@@ -50,7 +50,7 @@ export const useMaintenanceActions = () => {
       if (status === 'completed') updateData.actual_duration = new Date().getHours(); // Simple duration calc
 
       const { error } = await supabase
-        .from('maintenance_schedules')
+        .from('maintenance_schedules' as any)
         .update(updateData)
         .eq('id', scheduleId);
 
