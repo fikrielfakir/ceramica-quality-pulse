@@ -1,75 +1,66 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useMaintenanceActions = () => {
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const scheduleMaintenance = async (maintenanceData: any) => {
-    if (!hasPermission('schedule_maintenance')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de programmer la maintenance", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('maintenance_schedules' as any)
-        .insert({
-          ...maintenanceData,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
+  const scheduleMaintenanceTask = useMutation({
+    mutationFn: async (taskData: any) => {
+      const { data, error } = await (supabase as any)
+        .from('maintenance_schedules')
+        .insert(taskData)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Maintenance programmée",
+        description: "La tâche de maintenance a été programmée avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ['maintenance-schedules'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de programmer la maintenance : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-      toast({ title: "Maintenance programmée", description: "La maintenance a été programmée avec succès" });
-      return true;
-    } catch (error) {
-      console.error('Error scheduling maintenance:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la programmation", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateMaintenanceStatus = async (scheduleId: string, status: string, notes?: string) => {
-    if (!hasPermission('schedule_maintenance')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de modifier la maintenance", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const updateData: any = { status };
-      if (notes) updateData.notes = notes;
-      if (status === 'completed') updateData.actual_duration = new Date().getHours(); // Simple duration calc
-
-      const { error } = await supabase
-        .from('maintenance_schedules' as any)
-        .update(updateData)
-        .eq('id', scheduleId);
+  const updateMaintenanceTask = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await (supabase as any)
+        .from('maintenance_schedules')
+        .update(data)
+        .eq('id', id);
 
       if (error) throw error;
-
-      toast({ title: "Statut mis à jour", description: `Maintenance marquée comme ${status}` });
-      return true;
-    } catch (error) {
-      console.error('Error updating maintenance:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la mise à jour", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Maintenance mise à jour",
+        description: "La tâche de maintenance a été mise à jour",
+      });
+      queryClient.invalidateQueries({ queryKey: ['maintenance-schedules'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la maintenance : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   return {
-    scheduleMaintenance,
-    updateMaintenanceStatus,
-    loading
+    scheduleMaintenanceTask,
+    updateMaintenanceTask
   };
 };

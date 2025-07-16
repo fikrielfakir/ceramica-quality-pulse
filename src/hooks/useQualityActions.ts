@@ -1,118 +1,106 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useQualityActions = () => {
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const createQualityTest = async (testData: any) => {
-    if (!hasPermission('create_quality_tests')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de créer des tests", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
+  const createQualityTest = useMutation({
+    mutationFn: async (testData: any) => {
+      const { data, error } = await supabase
         .from('quality_tests')
-        .insert(testData);
-
-      if (error) throw error;
-
-      toast({ title: "Test créé", description: "Le test qualité a été créé avec succès" });
-      return true;
-    } catch (error) {
-      console.error('Error creating quality test:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la création du test", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateReport = async (testId: string, reportType: string) => {
-    if (!hasPermission('generate_reports')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de générer des rapports", variant: "destructive" });
-      return null;
-    }
-
-    setLoading(true);
-    try {
-      const { data: test } = await supabase
-        .from('quality_tests')
-        .select('*')
-        .eq('id', testId)
+        .insert(testData)
+        .select()
         .single();
 
-      if (!test) throw new Error('Test non trouvé');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test créé",
+        description: "Le test qualité a été créé avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ['quality-tests'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le test : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
+  const updateQualityTest = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase
+        .from('quality_tests')
+        .update(data)
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test mis à jour",
+        description: "Le test qualité a été mis à jour avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ['quality-tests'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le test : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateReport = useMutation({
+    mutationFn: async ({ testId, reportType }: { testId: string; reportType: string }) => {
       const reportData = {
-        test_id: testId,
+        lot_id: testId,
         report_type: reportType,
         report_data: {
-          test_details: test,
           generated_at: new Date().toISOString(),
-          status: test.status
+          type: reportType,
+          test_id: testId
         },
         generated_by: (await supabase.auth.getUser()).data.user?.id
       };
 
-      const { data, error } = await supabase
-        .from('quality_reports' as any)
+      const { data, error } = await (supabase as any)
+        .from('quality_reports')
         .insert(reportData)
         .select()
         .single();
 
       if (error) throw error;
-
-      toast({ title: "Rapport généré", description: `Rapport ${reportType} créé avec succès` });
       return data;
-    } catch (error) {
-      console.error('Error generating report:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la génération du rapport", variant: "destructive" });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createCorrectiveAction = async (testId: string, actionData: any) => {
-    if (!hasPermission('corrective_actions')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de créer des actions correctives", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('corrective_actions' as any)
-        .insert({
-          test_id: testId,
-          ...actionData,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
-
-      if (error) throw error;
-
-      toast({ title: "Action corrective créée", description: "L'action corrective a été initiée avec succès" });
-      return true;
-    } catch (error) {
-      console.error('Error creating corrective action:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la création de l'action corrective", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rapport généré",
+        description: "Le rapport a été généré avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ['quality-reports'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le rapport : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const downloadReport = async (reportId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('quality_reports' as any)
+      const { data, error } = await (supabase as any)
+        .from('quality_reports')
         .select('*')
         .eq('id', reportId)
         .single();
@@ -132,18 +120,23 @@ export const useQualityActions = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast({ title: "Téléchargement", description: "Rapport téléchargé avec succès" });
-    } catch (error) {
-      console.error('Error downloading report:', error);
-      toast({ title: "Erreur", description: "Erreur lors du téléchargement", variant: "destructive" });
+      toast({
+        title: "Téléchargement démarré",
+        description: "Le rapport a été téléchargé",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger le rapport : " + error.message,
+        variant: "destructive",
+      });
     }
   };
 
   return {
     createQualityTest,
+    updateQualityTest,
     generateReport,
-    createCorrectiveAction,
-    downloadReport,
-    loading
+    downloadReport
   };
 };

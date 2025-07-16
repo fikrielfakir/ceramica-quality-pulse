@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Shield } from "lucide-react";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -123,6 +124,18 @@ const AuthPage = () => {
               {isLogin ? "Créer un compte" : "Déjà un compte ? Se connecter"}
             </Button>
           </form>
+          
+          <div className="mt-6 pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => window.location.href = "/admin-auth"}
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Accès Administrateur
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

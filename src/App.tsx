@@ -1,15 +1,18 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { AuthProvider } from "@/hooks/useAuth"; // Add this import
+import { AuthProvider } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
+import AdminAuth from "@/pages/AdminAuth";
+import AdminDashboard from "@/pages/AdminDashboard";
 import QualityControl from "@/components/QualityControl";
 import EnhancedQualityControl from "@/components/EnhancedQualityControl";
 import EnergyMonitoring from "@/components/EnergyMonitoring";
@@ -46,6 +49,15 @@ const AppContent = () => {
         <main className={user ? "pt-4" : ""}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin-auth" element={<AdminAuth />} />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/"
               element={
@@ -121,7 +133,7 @@ const AppContent = () => {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly={true}>
                   <AdminPanel />
                 </ProtectedRoute>
               }

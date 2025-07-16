@@ -1,50 +1,44 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useEnergyActions = () => {
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const createEnergyAlert = async (alertData: any) => {
-    if (!hasPermission('energy_alerts')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de gérer les alertes énergie", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('energy_alerts' as any)
-        .insert(alertData);
+  const createEnergyAlert = useMutation({
+    mutationFn: async (alertData: any) => {
+      const { data, error } = await (supabase as any)
+        .from('energy_alerts')
+        .insert(alertData)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Alerte créée",
+        description: "L'alerte énergétique a été créée avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ['energy-alerts'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'alerte : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-      toast({ title: "Alerte créée", description: "L'alerte énergétique a été créée avec succès" });
-      return true;
-    } catch (error) {
-      console.error('Error creating energy alert:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la création de l'alerte", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resolveEnergyAlert = async (alertId: string) => {
-    if (!hasPermission('energy_alerts')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation de résoudre les alertes", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('energy_alerts' as any)
-        .update({
+  const resolveEnergyAlert = useMutation({
+    mutationFn: async (alertId: string) => {
+      const { error } = await (supabase as any)
+        .from('energy_alerts')
+        .update({ 
           status: 'resolved',
           resolved_at: new Date().toISOString(),
           resolved_by: (await supabase.auth.getUser()).data.user?.id
@@ -52,47 +46,51 @@ export const useEnergyActions = () => {
         .eq('id', alertId);
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Alerte résolue",
+        description: "L'alerte énergétique a été marquée comme résolue",
+      });
+      queryClient.invalidateQueries({ queryKey: ['energy-alerts'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de résoudre l'alerte : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-      toast({ title: "Alerte résolue", description: "L'alerte a été marquée comme résolue" });
-      return true;
-    } catch (error) {
-      console.error('Error resolving alert:', error);
-      toast({ title: "Erreur", description: "Erreur lors de la résolution de l'alerte", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const recordEnergyConsumption = async (consumptionData: any) => {
-    if (!hasPermission('manage_energy')) {
-      toast({ title: "Permission refusée", description: "Vous n'avez pas l'autorisation d'enregistrer la consommation", variant: "destructive" });
-      return false;
-    }
-
-    setLoading(true);
-    try {
+  const updateEnergyData = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const { error } = await supabase
         .from('energy_consumption')
-        .insert(consumptionData);
+        .update(data)
+        .eq('id', id);
 
       if (error) throw error;
-
-      toast({ title: "Consommation enregistrée", description: "Les données de consommation ont été enregistrées" });
-      return true;
-    } catch (error) {
-      console.error('Error recording consumption:', error);
-      toast({ title: "Erreur", description: "Erreur lors de l'enregistrement", variant: "destructive" });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Données mises à jour",
+        description: "Les données énergétiques ont été mises à jour",
+      });
+      queryClient.invalidateQueries({ queryKey: ['energy-consumption'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour les données : " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   return {
     createEnergyAlert,
     resolveEnergyAlert,
-    recordEnergyConsumption,
-    loading
+    updateEnergyData
   };
 };
