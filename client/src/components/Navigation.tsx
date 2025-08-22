@@ -1,26 +1,37 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { 
+  LayoutDashboard, 
+  Microscope, 
+  TestTube2, 
+  Zap, 
+  Recycle, 
+  FileText, 
+  Target, 
+  User, 
+  Settings,
+  Shield
+} from "lucide-react";
 
 const Navigation = () => {
   const location = useLocation();
-  const { isAdmin, hasPermission, userRole } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
 
   const getNavItems = () => {
     const baseItems = [
-      { path: "/", label: "Tableau de bord", icon: "🏠", permission: "view_dashboard" }
+      { path: "/", label: "Tableau de bord", icon: LayoutDashboard, permission: "view_dashboard" }
     ];
 
     const conditionalItems = [
-      { path: "/quality-control", label: "Contrôle Qualité", icon: "🔬", permission: "view_quality_tests" },
-      { path: "/enhanced-quality", label: "Tests & Mesures", icon: "🧪", permission: "create_quality_tests" },
-      { path: "/energy", label: "Suivi Énergétique", icon: "⚡", permission: "view_energy" },
-      { path: "/waste", label: "Gestion Déchets", icon: "♻️", permission: "view_production" },
-      { path: "/documents", label: "Documents", icon: "📄", permission: "view_quality_tests" },
-      { path: "/testing-campaigns", label: "Campagnes", icon: "🎯", permission: "view_quality_tests" },
-      { path: "/profile", label: "Profil", icon: "👤", permission: null },
-      { path: "/settings", label: "Paramètres", icon: "⚙️", permission: null }
+      { path: "/quality-control", label: "Contrôle Qualité", icon: Microscope, permission: "view_quality_tests" },
+      { path: "/enhanced-quality", label: "Tests & Mesures", icon: TestTube2, permission: "create_quality_tests" },
+      { path: "/energy", label: "Suivi Énergétique", icon: Zap, permission: "view_energy" },
+      { path: "/waste", label: "Gestion Déchets", icon: Recycle, permission: "view_production" },
+      { path: "/documents", label: "Documents", icon: FileText, permission: "view_quality_tests" },
+      { path: "/testing-campaigns", label: "Campagnes", icon: Target, permission: "view_quality_tests" },
+      { path: "/profile", label: "Profil", icon: User, permission: null },
+      { path: "/settings", label: "Paramètres", icon: Settings, permission: null }
     ];
 
     // Filter items based on permissions
@@ -32,7 +43,7 @@ const Navigation = () => {
 
     // Add admin panel for admins
     if (isAdmin()) {
-      allItems.push({ path: "/admin", label: "🛠️ Administration", icon: "🛠️", permission: null });
+      allItems.push({ path: "/admin", label: "Administration", icon: Shield, permission: null });
     }
 
     return allItems;
@@ -41,34 +52,35 @@ const Navigation = () => {
   const navItems = getNavItems();
 
   return (
-    <nav className="bg-white shadow-md border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex space-x-8 overflow-x-auto">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                  location.pathname === item.path
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-          
-          {/* Role indicator */}
-          <div className="flex items-center">
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {userRole}
-            </span>
+    <nav className="bg-white border-b border-slate-200 h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div className="flex items-center h-full overflow-x-auto scrollbar-hide">
+          <div className="flex space-x-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`
+                    inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                    ${isActive 
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm" 
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }
+                  `}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
+      
     </nav>
   );
 };

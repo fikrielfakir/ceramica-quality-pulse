@@ -1,21 +1,48 @@
-
 import React from "react";
-import MetricCard from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useProductionData, useQualityTests } from "@/hooks/useProductionData";
-import { useEnergyConsumption, useWasteRecords } from "@/hooks/useEnergyData";
+import { useQuery } from "@tanstack/react-query";
+import { apiService } from "@/services/api";
+import { 
+  Factory, 
+  CheckCircle, 
+  Zap, 
+  Recycle, 
+  TrendingUp, 
+  TrendingDown,
+  AlertTriangle,
+  Activity,
+  BarChart3,
+  Eye
+} from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const { data: productionLots, isLoading: productionLoading } = useProductionData();
-  const { data: qualityTests, isLoading: qualityLoading } = useQualityTests();
-  const { data: energyData, isLoading: energyLoading } = useEnergyConsumption();
-  const { data: wasteData, isLoading: wasteLoading } = useWasteRecords();
+  
+  // Fetch data using React Query
+  const { data: productionLots } = useQuery({
+    queryKey: ["/api/production-lots"],
+    queryFn: () => apiService.getProductionLots()
+  });
+  
+  const { data: qualityTests } = useQuery({
+    queryKey: ["/api/quality-tests"],
+    queryFn: () => apiService.getQualityTests()
+  });
+  
+  const { data: energyData } = useQuery({
+    queryKey: ["/api/energy-consumption"],
+    queryFn: () => apiService.getEnergyConsumption()
+  });
+  
+  const { data: wasteData } = useQuery({
+    queryKey: ["/api/waste-records"],
+    queryFn: () => apiService.getWasteRecords()
+  });
 
-  // Calculate metrics from real data
+  // Calculate metrics
   const totalProduction = productionLots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0;
   const conformeTests = qualityTests?.filter(test => test.status === 'Conforme').length || 0;
   const totalTests = qualityTests?.length || 1;
@@ -25,198 +52,183 @@ const Dashboard = () => {
   const totalWasteRecycled = wasteData?.filter(record => record.disposal_method?.includes('Recyclage')).length || 0;
   const recyclingRate = wasteData?.length ? ((totalWasteRecycled / wasteData.length) * 100).toFixed(1) : '0';
 
-  const energySources = [
-    { name: "Électricité", value: 85, color: "bg-blue-500" },
-    { name: "Gaz", value: 72, color: "bg-orange-500" },
-    { name: "Eau", value: 58, color: "bg-cyan-500" }
-  ];
-
-  const qualityMetrics = qualityTests?.slice(0, 3).map(test => ({
-    defect: test.defect_type || 'none',
-    count: test.defect_count || 0,
-    percentage: test.defect_count ? ((test.defect_count / 100) * 100).toFixed(1) : '0'
-  })) || [];
-
-  const handleAlertAction = (alertType: string) => {
-    toast({
-      title: "Action initiée",
-      description: `Traitement de l'alerte: ${alertType}`,
-    });
-  };
-
-  const handleOptimizationAction = () => {
-    toast({
-      title: "Optimisation appliquée",
-      description: "Le système a programmé l'optimisation énergétique",
-    });
-  };
-
-  if (productionLoading || qualityLoading || energyLoading || wasteLoading) {
-    return <div className="p-6">Chargement des données...</div>;
-  }
+  const MetricCard = ({ title, value, unit, trend, icon, color, description }: any) => (
+    <Card className="relative overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-slate-700">{title}</CardTitle>
+        <div className={`h-10 w-10 rounded-lg ${color} flex items-center justify-center`}>
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-slate-900">
+          {value} <span className="text-sm text-slate-500 font-normal">{unit}</span>
+        </div>
+        <div className="flex items-center space-x-2 mt-2">
+          {trend > 0 ? (
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          ) : (
+            <TrendingDown className="h-4 w-4 text-red-600" />
+          )}
+          <span className={`text-xs font-medium ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {Math.abs(trend)}% vs hier
+          </span>
+        </div>
+        {description && (
+          <p className="text-xs text-slate-500 mt-1">{description}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="space-y-6 p-6 animate-fade-in">
-      {/* Métriques principales */}
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Tableau de Bord</h1>
+          <p className="text-slate-600">Vue d'ensemble de la production céramique</p>
+        </div>
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Activity className="h-3 w-3 mr-1" />
+          Système opérationnel
+        </Badge>
+      </div>
+
+      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Production Journalière"
-          value={totalProduction.toString()}
-          unit="pcs"
+          value={totalProduction}
+          unit="pièces"
           trend={5.2}
-          icon="🏭"
-          color="bg-primary"
-          description="Objectif: 3,000 pcs"
+          icon={<Factory className="h-5 w-5 text-white" />}
+          color="bg-blue-600"
+          description="Objectif: 3,000 pièces"
         />
         <MetricCard
           title="Taux de Qualité"
           value={qualityRate}
           unit="%"
           trend={1.2}
-          icon="✅"
-          color="bg-eco-green"
-          description="Conforme ISO 13006"
+          icon={<CheckCircle className="h-5 w-5 text-white" />}
+          color="bg-green-600"
+          description="Objectif: > 95%"
         />
         <MetricCard
-          title="Consommation Énergie"
-          value={Math.round(totalEnergyConsumption).toString()}
+          title="Consommation Énergétique"
+          value={Math.round(totalEnergyConsumption)}
           unit="kWh"
-          trend={-3.1}
-          icon="⚡"
-          color="bg-energy-purple"
-          description="Objectif: -12% annuel"
+          trend={-2.1}
+          icon={<Zap className="h-5 w-5 text-white" />}
+          color="bg-orange-600"
+          description="Réduction de 2.1%"
         />
         <MetricCard
-          title="Recyclage Déchets"
+          title="Taux de Recyclage"
           value={recyclingRate}
           unit="%"
-          trend={8.5}
-          icon="♻️"
-          color="bg-warning-orange"
-          description="Objectif: 100%"
+          trend={3.8}
+          icon={<Recycle className="h-5 w-5 text-white" />}
+          color="bg-emerald-600"
+          description="Objectif: 85%"
         />
       </div>
 
+      {/* Charts and Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Consommation énergétique */}
+        {/* Energy Sources */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🔋 Consommation Énergétique en Temps Réel
+            <CardTitle className="flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Sources d'Énergie
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {energySources.map((item, index) => (
-              <div key={index} className="space-y-2">
+            {[
+              { name: "Électricité", value: 85, color: "bg-blue-500" },
+              { name: "Gaz Naturel", value: 72, color: "bg-orange-500" },
+              { name: "Eau", value: 58, color: "bg-cyan-500" }
+            ].map((source) => (
+              <div key={source.name} className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-gray-600">{item.value}%</span>
+                  <span className="font-medium text-slate-700">{source.name}</span>
+                  <span className="text-slate-600">{source.value}%</span>
                 </div>
-                <Progress value={item.value} className="h-2" />
+                <Progress value={source.value} className="h-2" />
               </div>
             ))}
-            <div className="mt-4 p-3 bg-green-50 rounded-lg">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-green-800">
-                  💡 Récupération de chaleur active: <strong>42.3 kWh/h</strong>
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleOptimizationAction}
-                >
-                  Optimiser
-                </Button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Contrôle qualité */}
+        {/* Quality Metrics */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🎯 Analyse Défauts - Dernières 24h
+            <CardTitle className="flex items-center">
+              <Eye className="h-5 w-5 mr-2" />
+              Contrôles Qualité Récents
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {qualityMetrics.map((metric, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">{metric.defect}</p>
-                    <p className="text-xs text-gray-600">{metric.count} défauts détectés</p>
+            {qualityTests?.slice(0, 3).length ? (
+              <div className="space-y-4">
+                {qualityTests.slice(0, 3).map((test) => (
+                  <div key={test.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-slate-700">Lot #{test.lot_number}</p>
+                      <p className="text-sm text-slate-500">{test.test_type}</p>
+                    </div>
+                    <Badge 
+                      variant={test.status === 'Conforme' ? 'default' : 'destructive'}
+                      className={test.status === 'Conforme' ? 'bg-green-100 text-green-800' : ''}
+                    >
+                      {test.status}
+                    </Badge>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">{metric.percentage}%</p>
-                    <p className="text-xs text-gray-500">du total</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-blue-800">
-                  📋 Dernier audit ISO: <strong>Conforme</strong> - 15/03/2024
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => toast({
-                    title: "Rapport généré",
-                    description: "Le rapport d'audit a été téléchargé",
-                  })}
-                >
-                  Télécharger
-                </Button>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <p>Aucun test récent</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Alertes et notifications */}
-      <Card className="border-l-4 border-l-warning-orange">
+      {/* Alerts Section */}
+      <Card className="border-orange-200 bg-orange-50">
         <CardHeader>
-          <CardTitle className="text-warning-orange">🚨 Alertes & Actions Prioritaires</CardTitle>
+          <CardTitle className="flex items-center text-orange-800">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Alertes et Notifications
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3 bg-red-50 rounded-lg">
-              <p className="font-medium text-red-800">Four B2 - Température élevée</p>
-              <p className="text-sm text-red-600 mb-2">Vérifier système de refroidissement</p>
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={() => handleAlertAction("Four B2 - Température")}
-              >
-                Traiter
-              </Button>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+              <div className="flex items-center space-x-3">
+                <div className="h-2 w-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-slate-700">
+                  Température du four légèrement élevée - Zone B
+                </span>
+              </div>
+              <Badge variant="outline" className="text-orange-700 border-orange-300">
+                Modéré
+              </Badge>
             </div>
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <p className="font-medium text-yellow-800">Maintenance préventive</p>
-              <p className="text-sm text-yellow-600 mb-2">Broyeur pendulaire - Dans 3 jours</p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleAlertAction("Maintenance préventive")}
-              >
-                Programmer
-              </Button>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <p className="font-medium text-green-800">Objectif RSE atteint</p>
-              <p className="text-sm text-green-600 mb-2">Recyclage liquides: 100%</p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => toast({
-                  title: "Rapport RSE",
-                  description: "Rapport de performance RSE généré",
-                })}
-              >
-                Voir rapport
-              </Button>
+            
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+              <div className="flex items-center space-x-3">
+                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-slate-700">
+                  Maintenance préventive programmée pour demain
+                </span>
+              </div>
+              <Badge variant="outline" className="text-green-700 border-green-300">
+                Planifié
+              </Badge>
             </div>
           </div>
         </CardContent>

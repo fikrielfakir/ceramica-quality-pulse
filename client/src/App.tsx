@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,114 +30,120 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="text-slate-600 font-medium">Chargement...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <BrowserRouter>
         {user && (
-          <>
+          <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
             <Header />
             <Navigation />
-          </>
+          </div>
         )}
-        <main className={user ? "pt-4" : ""}>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin-auth" element={<AdminAuth />} />
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/quality-control"
-              element={
-                <ProtectedRoute>
-                  <QualityControl />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/enhanced-quality"
-              element={
-                <ProtectedRoute>
-                  <EnhancedQualityControl />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/energy"
-              element={
-                <ProtectedRoute>
-                  <EnergyMonitoring />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/waste"
-              element={
-                <ProtectedRoute>
-                  <WasteManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/documents"
-              element={
-                <ProtectedRoute>
-                  <ComplianceDocuments />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/testing-campaigns"
-              element={
-                <ProtectedRoute>
-                  <TestingCampaigns />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <UserProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <AdminPanel />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+        
+        <main className={user ? "pt-32 min-h-screen" : "min-h-screen"}>
+          <div className={user ? "container mx-auto px-4 py-6 max-w-7xl" : ""}>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin-auth" element={<AdminAuth />} />
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/quality-control"
+                element={
+                  <ProtectedRoute>
+                    <QualityControl />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/enhanced-quality"
+                element={
+                  <ProtectedRoute>
+                    <EnhancedQualityControl />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/energy"
+                element={
+                  <ProtectedRoute>
+                    <EnergyMonitoring />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/waste"
+                element={
+                  <ProtectedRoute>
+                    <WasteManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents"
+                element={
+                  <ProtectedRoute>
+                    <ComplianceDocuments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/testing-campaigns"
+                element={
+                  <ProtectedRoute>
+                    <TestingCampaigns />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <AppSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </div>
         </main>
       </BrowserRouter>
       <Toaster />
