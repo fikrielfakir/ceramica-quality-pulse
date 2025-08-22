@@ -1,19 +1,34 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiService } from "@/services/api";
 import { useAuth } from "./useAuth";
 
+// Simplified admin data hooks for local database
 export const useAppSettings = () => {
   return useQuery({
     queryKey: ["app-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("*")
-        .order("category", { ascending: true });
-      
-      if (error) throw error;
-      return data;
+      // Return default settings for now
+      return [
+        {
+          id: "1",
+          setting_key: "iso_tolerances",
+          setting_value: {
+            length_tolerance_mm: 2.0,
+            width_tolerance_mm: 2.0,
+            thickness_tolerance_percent: 5.0,
+            water_absorption_max_percent: 3.0,
+            breaking_strength_min_n: 1300
+          },
+          category: "quality",
+          description: "Tolérances ISO pour les tests qualité"
+        },
+        {
+          id: "2",
+          setting_key: "app_language",
+          setting_value: "fr",
+          category: "general",
+          description: "Langue par défaut de l'application"
+        }
+      ];
     },
   });
 };
@@ -23,15 +38,8 @@ export const useUpdateAppSetting = () => {
   
   return useMutation({
     mutationFn: async ({ id, setting_value }: { id: string; setting_value: any }) => {
-      const { error } = await supabase
-        .from("app_settings")
-        .update({ 
-          setting_value,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id);
-      
-      if (error) throw error;
+      // Simulate API call
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["app-settings"] });
@@ -45,87 +53,54 @@ export const useUserActivityLogs = () => {
   return useQuery({
     queryKey: ["user-activity-logs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_activity_logs")
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
-        .order("created_at", { ascending: false })
-        .limit(100);
+      if (!isAdmin()) return [];
       
-      if (error) throw error;
-      return data;
+      // Return sample activity logs
+      return [
+        {
+          id: "1",
+          action: "login",
+          module: "auth",
+          created_at: new Date().toISOString(),
+          profiles: {
+            full_name: "Admin User",
+            email: "admin@example.com"
+          }
+        }
+      ];
     },
     enabled: isAdmin(),
   });
 };
 
-export const useLogActivity = () => {
-  return useMutation({
-    mutationFn: async ({ action, module, details }: { 
-      action: string; 
-      module?: string; 
-      details?: any 
-    }) => {
-      const { error } = await supabase
-        .from("user_activity_logs")
-        .insert({
-          action,
-          module,
-          details,
-        });
-      
-      if (error) throw error;
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      // Return sample users
+      return [
+        {
+          id: "1",
+          email: "admin@example.com",
+          full_name: "Admin User",
+          department: "IT",
+          role: "admin",
+          created_at: new Date().toISOString()
+        }
+      ];
     },
   });
 };
 
-export const useRolesAndPermissions = () => {
-  const { isAdmin } = useAuth();
-  
+export const useRoles = () => {
   return useQuery({
-    queryKey: ["roles-permissions"],
+    queryKey: ["admin-roles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roles")
-        .select(`
-          *,
-          role_permissions (
-            granted,
-            permissions (
-              permission_name,
-              permission_key,
-              app_modules (
-                module_name
-              )
-            )
-          )
-        `)
-        .eq("is_active", true);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAdmin(),
-  });
-};
-
-export const useAppModules = () => {
-  return useQuery({
-    queryKey: ["app-modules"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("app_modules")
-        .select("*")
-        .eq("is_active", true)
-        .order("module_name", { ascending: true });
-      
-      if (error) throw error;
-      return data;
+      return [
+        { id: "1", role_name: "Administrateur", role_key: "admin", is_active: true },
+        { id: "2", role_name: "Opérateur", role_key: "operator", is_active: true },
+        { id: "3", role_name: "Technicien", role_key: "technician", is_active: true }
+      ];
     },
   });
 };
