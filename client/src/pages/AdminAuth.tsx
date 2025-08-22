@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Shield } from "lucide-react";
 
 const AdminAuth = () => {
@@ -13,41 +13,32 @@ const AdminAuth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        // Check if user has admin role
-        const { data: userRole } = await supabase
-          .from('user_roles')
-          .select(`
-            roles!inner (
-              role_key
-            )
-          `)
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (userRole?.roles?.role_key === 'admin') {
+      const success = await signIn(email, password);
+      
+      if (success) {
+        // Get user data from localStorage to check role
+        const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        
+        if (userData.role === 'admin') {
           toast({
             title: "Connexion Administrateur Réussie",
             description: "Redirection vers le tableau de bord administrateur",
           });
           window.location.href = "/admin-dashboard";
         } else {
-          await supabase.auth.signOut();
+          // Sign out non-admin user
+          localStorage.removeItem('currentUser');
           throw new Error("Accès refusé - Privilèges administrateur requis");
         }
+      } else {
+        throw new Error("Invalid credentials");
       }
     } catch (error: any) {
       toast({

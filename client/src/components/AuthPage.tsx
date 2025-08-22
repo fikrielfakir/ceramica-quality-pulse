@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { apiService } from "@/services/api";
 import { Shield } from "lucide-react";
 
 const AuthPage = () => {
@@ -15,6 +16,7 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,35 +24,30 @@ const AuthPage = () => {
 
     try {
       if (isLogin) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue dans EcoQuality",
-        });
-        
-        window.location.href = "/";
+        const success = await signIn(email, password);
+        if (success) {
+          toast({
+            title: "Connexion réussie",
+            description: "Bienvenue dans EcoQuality",
+          });
+          window.location.href = "/";
+        } else {
+          throw new Error("Invalid credentials");
+        }
       } else {
-        const { data, error } = await supabase.auth.signUp({
+        await apiService.register({
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              full_name: fullName,
-            }
-          }
+          fullName,
+          role: 'operator'
         });
-        if (error) throw error;
         
         toast({
           title: "Inscription réussie",
-          description: "Vérifiez votre email pour confirmer votre compte",
+          description: "Vous pouvez maintenant vous connecter",
         });
+        
+        setIsLogin(true);
       }
     } catch (error: any) {
       toast({
