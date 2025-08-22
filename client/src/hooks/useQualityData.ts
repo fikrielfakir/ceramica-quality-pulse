@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/services/api";
 import { useAuth } from "./useAuth";
 
 // Enhanced Quality Tests Hook - Fixed to work with updated database schema
@@ -8,217 +7,116 @@ export const useEnhancedQualityTests = () => {
   return useQuery({
     queryKey: ["enhanced-quality-tests"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("quality_tests")
-        .select(`
-          *,
-          production_lots (
-            lot_number,
-            product_type,
-            production_date
-          ),
-          profiles (
-            full_name,
-            email
-          )
-        `)
-        .order("test_date", { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      return await apiService.getQualityTests();
     },
   });
 };
 
-// Quality Standards Hook
+// Quality Standards Hook - Simplified for migration
 export const useQualityStandards = () => {
   return useQuery({
     queryKey: ["quality-standards"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("quality_standards")
-        .select("*")
-        .eq("is_active", true)
-        .order("standard_name");
-      
-      if (error) throw error;
-      return data;
+      // Return empty array for now, implement when standards table is added
+      return [];
     },
   });
 };
 
-// Equipment Calibration Hook
+// Equipment Calibration Hook - Simplified for migration  
 export const useEquipmentCalibration = () => {
   return useQuery({
     queryKey: ["equipment-calibration"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("equipment_calibration")
-        .select("*")
-        .eq("is_active", true)
-        .order("next_calibration_date");
-      
-      if (error) throw error;
-      return data;
+      // Return empty array for now, implement when calibration table is added
+      return [];
     },
   });
 };
 
-// Resistance Tests Hook
+// Resistance Tests Hook - Simplified for migration
 export const useResistanceTests = () => {
   return useQuery({
     queryKey: ["resistance-tests"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resistance_tests")
-        .select(`
-          *,
-          production_lots (
-            lot_number,
-            product_type
-          ),
-          profiles!resistance_tests_controller_id_fkey (
-            full_name
-          ),
-          resistance_test_samples (
-            *
-          )
-        `)
-        .order("test_date", { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Return empty array for now, implement when resistance tests table is added
+      return [];
     },
   });
 };
 
-// Humidity Controls Hook
+// Humidity Controls Hook - Simplified for migration
 export const useHumidityControls = () => {
   return useQuery({
     queryKey: ["humidity-controls"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("humidity_controls")
-        .select(`
-          *,
-          production_lots (
-            lot_number,
-            product_type
-          ),
-          profiles!humidity_controls_controller_id_fkey (
-            full_name
-          )
-        `)
-        .order("test_date", { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Return empty array for now, implement when humidity controls table is added
+      return [];
     },
   });
 };
 
-// Dimensional Surface Tests Hook
-export const useDimensionalSurfaceTests = () => {
+// Dimensional Measurements Hook - Simplified for migration
+export const useDimensionalMeasurements = () => {
   return useQuery({
-    queryKey: ["dimensional-surface-tests"],
+    queryKey: ["dimensional-measurements"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dimensional_surface_tests")
-        .select(`
-          *,
-          production_lots (
-            lot_number,
-            product_type
-          ),
-          profiles!dimensional_surface_tests_controller_id_fkey (
-            full_name
-          ),
-          dimensional_surface_measurements (
-            *
-          )
-        `)
-        .order("test_date", { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Return empty array for now, implement when dimensional measurements table is added
+      return [];
     },
   });
 };
 
-// Mutation to create resistance test
-export const useCreateResistanceTest = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+// Testing Campaigns Hook
+export const useTestingCampaigns = () => {
+  return useQuery({
+    queryKey: ["testing-campaigns"],
+    queryFn: async () => {
+      return await apiService.getTestingCampaigns();
+    },
+  });
+};
 
+// Create Quality Test Mutation
+export const useCreateQualityTest = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async (testData: any) => {
-      const { data, error } = await supabase
-        .from("resistance_tests")
-        .insert({
-          ...testData,
-          created_by: user?.id,
-          controller_id: user?.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return await apiService.createQualityTest(testData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["resistance-tests"] });
+      queryClient.invalidateQueries({ queryKey: ["quality-tests"] });
+      queryClient.invalidateQueries({ queryKey: ["enhanced-quality-tests"] });
     },
   });
 };
 
-// Mutation to create humidity control
-export const useCreateHumidityControl = () => {
+// Update Quality Test Mutation
+export const useUpdateQualityTest = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
+  
   return useMutation({
-    mutationFn: async (controlData: any) => {
-      const { data, error } = await supabase
-        .from("humidity_controls")
-        .insert({
-          ...controlData,
-          created_by: user?.id,
-          controller_id: user?.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, testData }: { id: string; testData: any }) => {
+      return await apiService.updateQualityTest(id, testData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["humidity-controls"] });
+      queryClient.invalidateQueries({ queryKey: ["quality-tests"] });
+      queryClient.invalidateQueries({ queryKey: ["enhanced-quality-tests"] });
     },
   });
 };
 
-// Mutation to create dimensional surface test
-export const useCreateDimensionalSurfaceTest = () => {
+// Create Testing Campaign Mutation
+export const useCreateTestingCampaign = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
+  
   return useMutation({
-    mutationFn: async (testData: any) => {
-      const { data, error } = await supabase
-        .from("dimensional_surface_tests")
-        .insert({
-          ...testData,
-          created_by: user?.id,
-          controller_id: user?.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async (campaignData: any) => {
+      return await apiService.createTestingCampaign(campaignData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dimensional-surface-tests"] });
+      queryClient.invalidateQueries({ queryKey: ["testing-campaigns"] });
     },
   });
 };
