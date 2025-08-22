@@ -78,17 +78,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async authenticateUser(email: string, password: string): Promise<any> {
-    const result = await db.select().from(profiles).where(eq(profiles.email, email));
-    const profile = result[0];
-    
-    if (!profile) return null;
-    
-    const isValid = await bcrypt.compare(password, profile.password);
-    if (!isValid) return null;
-    
-    // Don't return password in response
-    const { password: _, ...profileWithoutPassword } = profile;
-    return profileWithoutPassword;
+    try {
+      console.log(`Authenticating user: ${email}`);
+      const result = await db.select().from(profiles).where(eq(profiles.email, email));
+      const profile = result[0];
+      
+      if (!profile) {
+        console.log(`User not found: ${email}`);
+        return null;
+      }
+      
+      console.log(`Found user: ${profile.email}, role: ${profile.role}`);
+      const isValid = await bcrypt.compare(password, profile.password);
+      console.log(`Password valid: ${isValid}`);
+      
+      if (!isValid) return null;
+      
+      // Don't return password in response
+      const { password: _, ...profileWithoutPassword } = profile;
+      return profileWithoutPassword;
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return null;
+    }
   }
 
   // Profile methods
